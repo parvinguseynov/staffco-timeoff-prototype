@@ -28,3 +28,4 @@ staffco-timeoff
 *.njsproj
 *.sln
 *.sw?
+.vercel
