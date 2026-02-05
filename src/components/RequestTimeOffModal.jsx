@@ -10,13 +10,12 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
 
   const [workingDays, setWorkingDays] = useState(0);
   const [futureBalance, setFutureBalance] = useState(null);
-  const [validationState, setValidationState] = useState('normal');
-  const [validationMessage, setValidationMessage] = useState('');
+  const [hasNegativeBalance, setHasNegativeBalance] = useState(false);
 
   const categories = [
-    { id: 'Vacation', name: 'Vacation (PTO)' },
-    { id: 'Sick Leave', name: 'Sick Leave' },
-    { id: 'Unpaid', name: 'Unpaid Leave' },
+    { id: 'Vacation', name: 'Vacation', icon: '🏖️' },
+    { id: 'Sick Leave', name: 'Sick Leave', icon: '🏥' },
+    { id: 'Unpaid', name: 'Unpaid', icon: '📋' },
   ];
 
   const selectedBalance = balances.find((b) => b.type === formData.category);
@@ -55,34 +54,15 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
       if (selectedBalance && typeof selectedBalance.available === 'number') {
         const future = selectedBalance.available - days;
         setFutureBalance(future);
-
-        // Determine validation state
-        if (future >= 0) {
-          setValidationState('normal');
-          setValidationMessage('');
-        } else if (future >= -5) {
-          // Negative but within limit
-          setValidationState('warning');
-          setValidationMessage(
-            `⚠️ This request will put your balance at ${future} days. Negative balances may be deducted from final pay.`
-          );
-        } else {
-          // Exceeds negative limit
-          setValidationState('error');
-          setValidationMessage(
-            `❌ This exceeds your negative balance limit of -5 days.`
-          );
-        }
+        setHasNegativeBalance(future < 0);
       } else {
         setFutureBalance(null);
-        setValidationState('normal');
-        setValidationMessage('');
+        setHasNegativeBalance(false);
       }
     } else {
       setWorkingDays(0);
       setFutureBalance(null);
-      setValidationState('normal');
-      setValidationMessage('');
+      setHasNegativeBalance(false);
     }
   }, [formData.startDate, formData.endDate, formData.category, selectedBalance]);
 
@@ -92,8 +72,6 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (validationState === 'error') return;
 
     const request = {
       id: Date.now(),
@@ -131,227 +109,155 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
     formData.category &&
     formData.startDate &&
     formData.endDate &&
-    workingDays > 0 &&
-    validationState !== 'error';
+    workingDays > 0;
 
   return (
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/50 z-[1000] animate-modalBackdrop"
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-modalBackdrop"
         onClick={onClose}
-      />
-
-      {/* Modal Container */}
-      <div
-        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl z-[1001] w-full max-w-[500px] animate-modalSlideUp"
-        style={{ maxHeight: '85vh', overflowY: 'auto' }}
       >
-        <form onSubmit={handleSubmit}>
+        {/* Modal Container */}
+        <div
+          className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col animate-modalSlideUp"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Modal Header */}
-          <div className="px-6 py-5 border-b border-border flex items-center justify-between sticky top-0 bg-white z-10">
-            <h2 className="text-lg font-semibold text-text-primary">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+            <h2 className="text-lg font-semibold text-gray-900">
               Request Time Off
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="text-text-secondary hover:text-text-primary transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* Modal Body */}
-          <div className="p-6" style={{ overflow: 'visible', paddingBottom: '80px' }}>
-          <div className="space-y-5">
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">
-                Category
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => handleChange('category', e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-button focus:outline-none focus:ring-2 focus:ring-primary/50"
-                style={{ minHeight: '36px' }}
-              >
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-              {selectedBalance && typeof selectedBalance.available === 'number' && (
-                <p className="text-sm text-text-secondary mt-1">
-                  {selectedBalance.available} days available
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+            {/* Modal Body */}
+            <div className="px-6 py-4 overflow-y-auto flex-1">
+              <div className="space-y-5">
+                {/* Time Off Type */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Time Off Type
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => handleChange('category', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.icon} {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedBalance && typeof selectedBalance.available === 'number' && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Available: {selectedBalance.available} days
+                    </p>
+                  )}
+                  {selectedBalance && selectedBalance.available === 'Unlimited' && (
+                    <p className="text-sm text-gray-500 mt-1">Available: Unlimited</p>
+                  )}
+                </div>
+
+                {/* Start Date */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => handleChange('startDate', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* End Date */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => handleChange('endDate', e.target.value)}
+                    min={formData.startDate}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Summary Card */}
+                {workingDays > 0 && futureBalance !== null && (
+                  <div className="bg-gray-50 rounded-lg p-4 mt-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-gray-700">Duration:</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {workingDays} working day{workingDays !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-700">Balance after:</span>
+                      <span className={`text-sm font-medium ${futureBalance >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        {futureBalance} days
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Note */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Note (optional)
+                  </label>
+                  <textarea
+                    value={formData.note}
+                    onChange={(e) => handleChange('note', e.target.value)}
+                    placeholder="Add a note for your manager..."
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Warning State */}
+            {hasNegativeBalance && futureBalance !== null && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mx-6 mb-4">
+                <p className="text-amber-800 text-sm">
+                  ⚠️ This will put your balance at {futureBalance} days
                 </p>
-              )}
-              {selectedBalance && selectedBalance.available === 'Unlimited' && (
-                <p className="text-sm text-text-secondary mt-1">Unlimited days</p>
-              )}
-            </div>
-
-            {/* Date Selection */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => handleChange('startDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-button focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  style={{ minHeight: '36px' }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-2">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => handleChange('endDate', e.target.value)}
-                  min={formData.startDate}
-                  className="w-full px-3 py-2 border border-border rounded-button focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  style={{ minHeight: '36px' }}
-                />
-              </div>
-            </div>
-
-            {/* Calculated Duration */}
-            {workingDays > 0 && (
-              <div className="bg-gray-50 rounded-button p-4 border border-border">
-                <div className="text-sm font-medium text-text-primary mb-1">
-                  Calculated Duration
-                </div>
-                <div className="text-lg font-semibold text-text-primary">
-                  {workingDays} working day{workingDays !== 1 ? 's' : ''}
-                </div>
-                <div className="text-xs text-text-secondary mt-1">
-                  Weekends and holidays not counted
-                </div>
               </div>
             )}
 
-            {/* Future Balance */}
-            {futureBalance !== null && (
-              <div className="bg-gray-50 rounded-button p-4 border border-border">
-                <div className="text-sm font-medium text-text-primary mb-1">
-                  Future Balance
-                </div>
-                <div className="text-lg font-semibold text-text-primary">
-                  Your balance after approval: {futureBalance} days
-                </div>
-              </div>
-            )}
-
-            {/* Validation Message */}
-            {validationMessage && (
-              <div
-                className={`rounded-button p-4 border ${
-                  validationState === 'warning'
-                    ? 'bg-warning/10 border-warning text-warning'
-                    : 'bg-error/10 border-error text-error'
-                }`}
-              >
-                <p className="text-sm">{validationMessage}</p>
-              </div>
-            )}
-
-            {/* Note */}
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">
-                Note
-              </label>
-              <textarea
-                value={formData.note}
-                onChange={(e) => handleChange('note', e.target.value)}
-                placeholder="Add a note for your manager (optional)"
-                rows={3}
-                className="w-full px-3 py-2 border border-border rounded-button focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-                style={{ minHeight: '80px' }}
-              />
-            </div>
-
-            {/* Attachment */}
-            <div>
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
               <button
                 type="button"
-                className="text-primary text-sm hover:underline"
+                onClick={onClose}
+                className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
-                + Attach documentation
+                Cancel
               </button>
-              <p className="text-xs text-text-secondary mt-1">
-                Required for sick leave over 3 days
-              </p>
+              <button
+                type="submit"
+                disabled={!isFormValid}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                Submit Request
+              </button>
             </div>
-          </div>
-
-          </div>
-
-          {/* Modal Footer */}
-          <div
-            className="px-6 border-t flex justify-end gap-3 sticky bottom-0 bg-white"
-            style={{
-              paddingTop: '16px',
-              paddingBottom: '16px',
-              borderTop: '1px solid #E2E8F0',
-              zIndex: 20,
-            }}
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              className="transition-all duration-150 hover:scale-105 active:scale-95"
-              style={{
-                padding: '8px 16px',
-                border: '1px solid #E2E8F0',
-                borderRadius: '8px',
-                background: 'white',
-                color: '#1E293B',
-                cursor: 'pointer',
-                fontSize: '14px',
-                minHeight: '36px',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!isFormValid}
-              className="transition-all duration-150 hover:scale-105 active:scale-95"
-              style={{
-                padding: '8px 16px',
-                background: '#2E5BFF',
-                color: 'white',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                minHeight: '36px',
-                opacity: isFormValid ? 1 : 0.5,
-              }}
-            >
-              {validationState === 'warning' ? 'Submit Anyway' : 'Submit Request'}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </>
   );
