@@ -4,6 +4,7 @@ import Header from './components/Header';
 import TimeOffContent from './components/TimeOffContent';
 import EmploymentInfo from './components/EmploymentInfo';
 import CompanySettings from './components/CompanySettings';
+import MainDashboard from './components/MainDashboard';
 import DemoReset from './components/DemoReset';
 
 function App() {
@@ -60,7 +61,9 @@ function App() {
 
         {/* Content */}
         <main className="flex-1 overflow-auto">
-          {currentView === 'Time Off' ? (
+          {currentView === 'Main Dashboard' ? (
+            <MainDashboard currentRole={currentRole} />
+          ) : currentView === 'Time Off' ? (
             <TimeOffContent currentRole={currentRole} />
           ) : currentView === 'Employment Info' ? (
             <EmploymentInfo />
