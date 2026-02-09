@@ -18,7 +18,7 @@ const PolicyList = () => {
     {
       id: 1,
       name: 'Standard PTO',
-      category: 'Vacation',
+      category: 'Paid',
       accrualRate: '1.67 days/month',
       employees: 12,
       status: 'Active',
@@ -26,7 +26,7 @@ const PolicyList = () => {
     {
       id: 2,
       name: 'Sick Leave',
-      category: 'Sick',
+      category: 'Paid',
       accrualRate: '10 days/year',
       employees: 15,
       status: 'Active',

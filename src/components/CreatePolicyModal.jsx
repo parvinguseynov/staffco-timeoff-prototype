@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
   const [formData, setFormData] = useState({
     name: editingPolicy?.name || '',
-    category: editingPolicy?.category || 'Vacation',
+    category: editingPolicy?.category || 'Paid',
     accrualType: editingPolicy?.accrualRate === 'Unlimited' ? 'Unlimited' : editingPolicy?.accrualRate === 'No accrual' ? 'Manual' : 'Accrual',
     accrualAmount: '',
     accrualPeriod: 'month',
@@ -105,10 +105,8 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                       onChange={(e) => handleChange('category', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="Vacation">Vacation</option>
-                      <option value="Sick">Sick</option>
+                      <option value="Paid">Paid</option>
                       <option value="Unpaid">Unpaid</option>
-                      <option value="Other">Other</option>
                     </select>
                   </div>
                 </div>
