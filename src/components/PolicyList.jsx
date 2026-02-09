@@ -2,6 +2,7 @@ import { useState } from 'react';
 import CreatePolicyModal from './CreatePolicyModal';
 import AddHolidayCalendarModal from './AddHolidayCalendarModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import DeletePolicyModal from './DeletePolicyModal';
 import Toast from './Toast';
 
 const PolicyList = () => {
@@ -12,8 +13,10 @@ const PolicyList = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [editingPolicy, setEditingPolicy] = useState(null);
   const [editingCalendar, setEditingCalendar] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showDeletePolicyModal, setShowDeletePolicyModal] = useState(false);
+  const [policyToDelete, setPolicyToDelete] = useState(null);
+  const [showDeleteCalendarModal, setShowDeleteCalendarModal] = useState(false);
+  const [calendarToDelete, setCalendarToDelete] = useState(null);
   const [policies, setPolicies] = useState([
     {
       id: 1,
@@ -103,20 +106,29 @@ const PolicyList = () => {
   };
 
   const handleDeletePolicyClick = (policy) => {
-    setDeleteTarget({ type: 'policy', item: policy });
-    setShowDeleteModal(true);
+    setPolicyToDelete(policy);
+    setShowDeletePolicyModal(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (deleteTarget.type === 'policy') {
-      setPolicies(policies.filter(p => p.id !== deleteTarget.item.id));
-      setToastMessage('Policy deleted successfully');
-    } else if (deleteTarget.type === 'calendar') {
-      setCalendars(calendars.filter(c => c.id !== deleteTarget.item.id));
-      setToastMessage('Calendar deleted successfully');
-    }
-    setShowDeleteModal(false);
-    setDeleteTarget(null);
+  const handleConfirmDeletePolicy = (deleteData) => {
+    // Handle policy deletion with the provided data
+    setPolicies(policies.filter(p => p.id !== deleteData.policy.id));
+    setShowDeletePolicyModal(false);
+    setPolicyToDelete(null);
+    setToastMessage('Policy deleted successfully');
+    setShowToast(true);
+  };
+
+  const handleDeleteCalendarClick = (calendar) => {
+    setCalendarToDelete(calendar);
+    setShowDeleteCalendarModal(true);
+  };
+
+  const handleConfirmDeleteCalendar = () => {
+    setCalendars(calendars.filter(c => c.id !== calendarToDelete.id));
+    setShowDeleteCalendarModal(false);
+    setCalendarToDelete(null);
+    setToastMessage('Calendar deleted successfully');
     setShowToast(true);
   };
 
@@ -156,11 +168,6 @@ const PolicyList = () => {
   const handleEditCalendar = (calendar) => {
     setEditingCalendar(calendar);
     setShowCalendarModal(true);
-  };
-
-  const handleDeleteCalendarClick = (calendar) => {
-    setDeleteTarget({ type: 'calendar', item: calendar });
-    setShowDeleteModal(true);
   };
 
   return (
@@ -437,21 +444,30 @@ const PolicyList = () => {
         />
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && deleteTarget && (
-        <DeleteConfirmationModal
-          title={`Delete ${deleteTarget.type === 'policy' ? 'Policy' : 'Calendar'}`}
-          message={
-            deleteTarget.type === 'policy'
-              ? `Are you sure you want to delete ${deleteTarget.item.name}? This will remove it from all assigned employees.`
-              : `Are you sure you want to delete ${deleteTarget.item.name}? This will unassign it from all employees.`
-          }
-          itemName={deleteTarget.item.name}
+      {/* Delete Policy Modal */}
+      {showDeletePolicyModal && policyToDelete && (
+        <DeletePolicyModal
+          policy={policyToDelete}
+          policies={policies}
           onClose={() => {
-            setShowDeleteModal(false);
-            setDeleteTarget(null);
+            setShowDeletePolicyModal(false);
+            setPolicyToDelete(null);
           }}
-          onConfirm={handleConfirmDelete}
+          onConfirm={handleConfirmDeletePolicy}
+        />
+      )}
+
+      {/* Delete Calendar Confirmation Modal */}
+      {showDeleteCalendarModal && calendarToDelete && (
+        <DeleteConfirmationModal
+          title="Delete Calendar"
+          message={`Are you sure you want to delete ${calendarToDelete.name}? This will unassign it from all employees.`}
+          itemName={calendarToDelete.name}
+          onClose={() => {
+            setShowDeleteCalendarModal(false);
+            setCalendarToDelete(null);
+          }}
+          onConfirm={handleConfirmDeleteCalendar}
         />
       )}
 
