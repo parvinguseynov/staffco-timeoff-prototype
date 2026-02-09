@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import TimeOffContent from './components/TimeOffContent';
 import EmploymentInfo from './components/EmploymentInfo';
+import CompanySettings from './components/CompanySettings';
 import DemoReset from './components/DemoReset';
 
 function App() {
@@ -63,6 +64,8 @@ function App() {
             <TimeOffContent currentRole={currentRole} />
           ) : currentView === 'Employment Info' ? (
             <EmploymentInfo />
+          ) : currentView === 'Settings' ? (
+            <CompanySettings />
           ) : (
             <div className="p-6">
               <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
