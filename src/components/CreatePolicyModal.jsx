@@ -13,6 +13,7 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
     negativeBalanceLimit: '',
     carryover: 'No carryover',
     carryoverAmount: '',
+    carryoverUnit: 'days',
     requireDocumentation: false,
   });
 
@@ -264,7 +265,7 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                     <label className="text-sm font-medium text-gray-900 pt-2">
                       Carryover Amount
                     </label>
-                    <div className="col-span-2">
+                    <div className="col-span-2 flex gap-2 items-center">
                       <input
                         type="number"
                         value={formData.carryoverAmount}
@@ -272,6 +273,14 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                         className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="0"
                       />
+                      <select
+                        value={formData.carryoverUnit}
+                        onChange={(e) => handleChange('carryoverUnit', e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="days">days</option>
+                        <option value="hours">hours</option>
+                      </select>
                     </div>
                   </div>
                 )}
