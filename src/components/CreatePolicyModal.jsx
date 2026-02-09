@@ -4,7 +4,7 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
   const [formData, setFormData] = useState({
     name: editingPolicy?.name || '',
     category: editingPolicy?.category || 'Paid',
-    accrualType: editingPolicy?.accrualRate === 'Unlimited' ? 'Unlimited' : editingPolicy?.accrualRate === 'No accrual' ? 'Manual' : 'Accrual',
+    accrualType: editingPolicy?.accrualRate === 'No accrual' ? 'Manual' : 'Accrual',
     accrualAmount: '',
     accrualPeriod: 'month',
     startAccruing: 'From hire date',
@@ -117,7 +117,7 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                     Accrual Type
                   </label>
                   <div className="col-span-2 space-y-2">
-                    {['Accrual', 'Manual', 'Unlimited'].map((type) => (
+                    {['Accrual', 'Manual'].map((type) => (
                       <label key={type} className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"

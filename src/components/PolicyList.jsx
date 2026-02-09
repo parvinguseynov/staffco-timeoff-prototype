@@ -67,9 +67,7 @@ const PolicyList = () => {
               name: policyData.name,
               category: policyData.category,
               accrualRate:
-                policyData.accrualType === 'Unlimited'
-                  ? 'Unlimited'
-                  : policyData.accrualType === 'Manual'
+                policyData.accrualType === 'Manual'
                   ? 'No accrual'
                   : `${policyData.accrualAmount} days/${policyData.accrualPeriod}`,
             }
@@ -86,9 +84,7 @@ const PolicyList = () => {
         name: policyData.name,
         category: policyData.category,
         accrualRate:
-          policyData.accrualType === 'Unlimited'
-            ? 'Unlimited'
-            : policyData.accrualType === 'Manual'
+          policyData.accrualType === 'Manual'
             ? 'No accrual'
             : `${policyData.accrualAmount} days/${policyData.accrualPeriod}`,
         employees: 0,
