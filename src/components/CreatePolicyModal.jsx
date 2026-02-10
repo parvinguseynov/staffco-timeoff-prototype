@@ -9,8 +9,6 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
     accrualType: editingPolicy?.accrualRate === 'No accrual' ? 'Manual' : 'Accrual',
     accrualAmount: '',
     accrualPeriod: 'month',
-    startAccruing: 'From hire date',
-    probationPeriod: '',
     hoursWorkedTarget: '160',
     hoursWorkedEarned: '8',
     hoursWorkedPeriod: 'Monthly',
@@ -325,49 +323,6 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                         <option value="month">month</option>
                         <option value="year">year</option>
                       </select>
-                    </div>
-                  </div>
-                )}
-
-                {/* Start Accruing (conditional) */}
-                {formData.accrualType === 'Accrual' && (
-                  <div className="grid grid-cols-3 gap-4 items-start">
-                    <label className="text-sm font-medium text-gray-900 pt-2">
-                      Start Accruing
-                    </label>
-                    <div className="col-span-2 space-y-2">
-                      {['From hire date', 'After probation period'].map((option) => (
-                        <label key={option} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="startAccruing"
-                            value={option}
-                            checked={formData.startAccruing === option}
-                            onChange={(e) => handleChange('startAccruing', e.target.value)}
-                            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-gray-900">{option}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Probation Period (conditional) */}
-                {formData.accrualType === 'Accrual' && formData.startAccruing === 'After probation period' && (
-                  <div className="grid grid-cols-3 gap-4 items-start">
-                    <label className="text-sm font-medium text-gray-900 pt-2">
-                      Probation Period
-                    </label>
-                    <div className="col-span-2 flex gap-2 items-center">
-                      <input
-                        type="number"
-                        value={formData.probationPeriod}
-                        onChange={(e) => handleChange('probationPeriod', e.target.value)}
-                        className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="0"
-                      />
-                      <span className="text-sm text-gray-500">days</span>
                     </div>
                   </div>
                 )}
