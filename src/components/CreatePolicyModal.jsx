@@ -4,6 +4,8 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
   const [formData, setFormData] = useState({
     name: editingPolicy?.name || '',
     category: editingPolicy?.category || 'Paid',
+    eligibility: (editingPolicy?.category || 'Paid') === 'Unpaid' ? 'From hire date' : 'After probation period',
+    customEligibilityDays: '',
     accrualType: editingPolicy?.accrualRate === 'No accrual' ? 'Manual' : 'Accrual',
     accrualAmount: '',
     accrualPeriod: 'month',
@@ -27,7 +29,14 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
   const [isPastDate, setIsPastDate] = useState(false);
 
   const handleChange = (field, value) => {
-    setFormData({ ...formData, [field]: value });
+    const updates = { [field]: value };
+
+    // Update default eligibility when category changes
+    if (field === 'category') {
+      updates.eligibility = value === 'Unpaid' ? 'From hire date' : 'After probation period';
+    }
+
+    setFormData({ ...formData, ...updates });
     if (errors[field]) {
       setErrors({ ...errors, [field]: null });
     }
@@ -181,6 +190,53 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                       <option value="Paid">Paid</option>
                       <option value="Unpaid">Unpaid</option>
                     </select>
+                  </div>
+                </div>
+
+                {/* Eligibility */}
+                <div className="grid grid-cols-3 gap-4 items-start">
+                  <label className="text-sm font-medium text-gray-900 pt-2">
+                    Eligibility
+                  </label>
+                  <div className="col-span-2">
+                    <label className="text-sm text-gray-600 mb-2 block">
+                      When can employees use this policy?
+                    </label>
+                    <select
+                      value={formData.eligibility}
+                      onChange={(e) => handleChange('eligibility', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="From hire date">From hire date (available immediately)</option>
+                      <option value="After probation period">After probation period</option>
+                      <option value="After 6 months">After 6 months of employment</option>
+                      <option value="After 1 year">After 1 year of employment</option>
+                      <option value="Custom">Custom</option>
+                    </select>
+
+                    {/* Custom eligibility days input */}
+                    {formData.eligibility === 'Custom' && (
+                      <div className="flex gap-2 items-center mt-3">
+                        <span className="text-sm text-gray-600">After</span>
+                        <input
+                          type="number"
+                          value={formData.customEligibilityDays}
+                          onChange={(e) => handleChange('customEligibilityDays', e.target.value)}
+                          className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="0"
+                          min="1"
+                        />
+                        <span className="text-sm text-gray-600">days of employment</span>
+                      </div>
+                    )}
+
+                    {/* Info text */}
+                    <div className="flex items-start gap-2 mt-3">
+                      <span className="text-blue-600 text-sm">ℹ️</span>
+                      <p className="text-xs text-gray-600">
+                        Employees who don't meet eligibility requirements won't be able to request this type of time off.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
