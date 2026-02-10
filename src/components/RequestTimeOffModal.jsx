@@ -15,7 +15,7 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
   const categories = [
     { id: 'Vacation', name: 'Vacation', icon: '🏖️' },
     { id: 'Sick Leave', name: 'Sick Leave', icon: '🏥' },
-    { id: 'Unpaid', name: 'Unpaid', icon: '📋' },
+    { id: 'Personal Leave', name: 'Personal Leave', icon: '📋' },
   ];
 
   const selectedBalance = balances.find((b) => b.type === formData.category);
@@ -159,13 +159,12 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
                       </option>
                     ))}
                   </select>
-                  {selectedBalance && typeof selectedBalance.available === 'number' && (
+                  {selectedBalance && (
                     <p className="text-sm text-gray-500 mt-1">
-                      Available: {selectedBalance.available} days
+                      {typeof selectedBalance.available === 'number'
+                        ? `Available: ${selectedBalance.available} days`
+                        : '(Unpaid)'}
                     </p>
-                  )}
-                  {selectedBalance && selectedBalance.available === 'Unlimited' && (
-                    <p className="text-sm text-gray-500 mt-1">Available: Unlimited</p>
                   )}
                 </div>
 

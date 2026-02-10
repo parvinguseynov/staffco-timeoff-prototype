@@ -4,10 +4,11 @@ import RequestTimeOffModal from './RequestTimeOffModal';
 const MainDashboard = ({ currentRole }) => {
   const [showRequestModal, setShowRequestModal] = useState(false);
 
-  // Mock data for time off balances (only Paid policies)
+  // Mock data for time off balances
   const balances = [
-    { id: 1, type: 'Vacation', available: 12.5, used: 7.5, total: 20 },
-    { id: 2, type: 'Sick Leave', available: 8, used: 2, total: 10 },
+    { id: 1, type: 'Vacation', available: 12.5, category: 'Paid' },
+    { id: 2, type: 'Sick Leave', available: 8, category: 'Paid' },
+    { id: 3, type: 'Personal Leave', available: null, category: 'Unpaid' },
   ];
 
   // Mock upcoming time off
@@ -37,15 +38,26 @@ const MainDashboard = ({ currentRole }) => {
             <h2 className="text-lg font-semibold text-gray-900">Time Off</h2>
           </div>
 
-          {/* Balances - Only Paid policies */}
-          <div className="grid grid-cols-2 gap-6 mb-4">
+          {/* Balances - All policies */}
+          <div className="grid grid-cols-3 gap-6 mb-4">
             {balances.map((balance) => (
               <div key={balance.id}>
-                <div className="text-sm text-gray-500 mb-1">{balance.type}</div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {balance.available} days
+                <div className="text-sm font-medium text-gray-600 mb-1">{balance.type}</div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">
+                  {balance.available !== null ? `${balance.available} days` : 'Available'}
                 </div>
-                <div className="text-sm text-gray-500">available</div>
+                <div className="text-sm text-gray-500">
+                  {balance.available !== null ? 'available' : 'as needed'}
+                </div>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-3 ${
+                    balance.category === 'Paid'
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  {balance.category}
+                </span>
               </div>
             ))}
           </div>

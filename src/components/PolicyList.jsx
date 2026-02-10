@@ -20,7 +20,7 @@ const PolicyList = () => {
   const [policies, setPolicies] = useState([
     {
       id: 1,
-      name: 'Standard PTO',
+      name: 'Vacation',
       category: 'Paid',
       accrualRate: '1.67 days/month',
       employees: 12,
@@ -31,15 +31,15 @@ const PolicyList = () => {
       name: 'Sick Leave',
       category: 'Paid',
       accrualRate: '10 days/year',
-      employees: 15,
+      employees: 12,
       status: 'Active',
     },
     {
       id: 3,
-      name: 'Unpaid Leave',
+      name: 'Personal Leave',
       category: 'Unpaid',
       accrualRate: 'No accrual',
-      employees: 8,
+      employees: 12,
       status: 'Active',
     },
   ]);

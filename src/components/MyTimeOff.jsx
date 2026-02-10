@@ -14,29 +14,26 @@ const MyTimeOff = () => {
     {
       id: 1,
       type: 'Vacation',
-      icon: '🏖️',
       available: 12.5,
+      category: 'Paid',
       accrued: 15,
       used: 2.5,
-      color: 'primary',
     },
     {
       id: 2,
       type: 'Sick Leave',
-      icon: '🏥',
       available: 8,
+      category: 'Paid',
       accrued: 10,
       used: 2,
-      color: 'success',
     },
     {
       id: 3,
-      type: 'Unpaid',
-      icon: '📋',
-      available: 'Unlimited',
+      type: 'Personal Leave',
+      available: null,
+      category: 'Unpaid',
       accrued: null,
       used: null,
-      color: 'text-secondary',
     },
   ];
 
@@ -161,24 +158,30 @@ const MyTimeOff = () => {
             key={balance.id}
             className={`bg-white rounded-xl border border-gray-200 p-5 transition-all duration-200 ease-out hover:shadow-lg hover:scale-[1.02] cursor-pointer animate-stagger-${index + 1}`}
           >
-            <span className="text-2xl mb-2 inline-block">{balance.icon}</span>
-            <h3 className="text-sm text-gray-500 mb-2">{balance.type}</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-1">{balance.type}</h3>
 
-            <div className="mb-2">
-              <div className="text-3xl font-bold text-gray-900">
-                {typeof balance.available === 'number'
-                  ? balance.available
-                  : balance.available}
-              </div>
-              <div className="text-sm text-gray-500">
-                {typeof balance.available === 'number' ? 'days available' : ''}
-              </div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">
+              {balance.available !== null ? `${balance.available} days` : 'Available'}
             </div>
+
+            <div className="text-sm text-gray-500 mb-3">
+              {balance.available !== null ? 'available' : 'as needed'}
+            </div>
+
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                balance.category === 'Paid'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {balance.category}
+            </span>
 
             {balance.accrued && (
               <>
                 {/* Progress Bar */}
-                <div className="mb-2">
+                <div className="mt-4 mb-2">
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-blue-600 h-2 rounded-full transition-all"
