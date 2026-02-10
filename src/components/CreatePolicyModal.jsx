@@ -9,6 +9,10 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
     accrualPeriod: 'month',
     startAccruing: 'From hire date',
     probationPeriod: '',
+    hoursWorkedTarget: '160',
+    hoursWorkedEarned: '8',
+    hoursWorkedPeriod: 'Monthly',
+    hoursWorkedProration: true,
     allowNegativeBalance: false,
     negativeBalanceLimit: '',
     carryover: 'No carryover',
@@ -185,20 +189,59 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                   <label className="text-sm font-medium text-gray-900 pt-2">
                     Accrual Type
                   </label>
-                  <div className="col-span-2 space-y-2">
-                    {['Accrual', 'Manual'].map((type) => (
-                      <label key={type} className="flex items-center gap-2 cursor-pointer">
+                  <div className="col-span-2">
+                    <div className="space-y-3">
+                      <label className="flex items-start gap-2 cursor-pointer">
                         <input
                           type="radio"
                           name="accrualType"
-                          value={type}
-                          checked={formData.accrualType === type}
+                          value="Accrual"
+                          checked={formData.accrualType === 'Accrual'}
                           onChange={(e) => handleChange('accrualType', e.target.value)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                          className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-900">{type}</span>
+                        <div>
+                          <span className="text-sm text-gray-900">Accrual (time-based)</span>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Employees earn PTO based on time employed (e.g., 1.67 days per month)
+                          </p>
+                        </div>
                       </label>
-                    ))}
+
+                      <label className="flex items-start gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="accrualType"
+                          value="Hours-Worked"
+                          checked={formData.accrualType === 'Hours-Worked'}
+                          onChange={(e) => handleChange('accrualType', e.target.value)}
+                          className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                        />
+                        <div>
+                          <span className="text-sm text-gray-900">Hours-Worked</span>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Employees earn PTO based on hours tracked in timesheets (e.g., 8 hours PTO per 160 hours worked)
+                          </p>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="accrualType"
+                          value="Manual"
+                          checked={formData.accrualType === 'Manual'}
+                          onChange={(e) => handleChange('accrualType', e.target.value)}
+                          className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                        />
+                        <div>
+                          <span className="text-sm text-gray-900">Manual</span>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Admin manually adds days to employee balances
+                          </p>
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -269,6 +312,98 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                         placeholder="0"
                       />
                       <span className="text-sm text-gray-500">days</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Hours-Worked Accrual Settings (conditional) */}
+                {formData.accrualType === 'Hours-Worked' && (
+                  <div className="col-span-3 border-t border-gray-200 pt-6">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-4">
+                      Hours-Worked Accrual Settings
+                    </h4>
+
+                    {/* Hours Worked Formula */}
+                    <div className="grid grid-cols-3 gap-4 items-start mb-4">
+                      <label className="text-sm font-medium text-gray-900 pt-2">
+                        Accrual Formula
+                      </label>
+                      <div className="col-span-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm text-gray-600">For every</span>
+                          <input
+                            type="number"
+                            value={formData.hoursWorkedTarget}
+                            onChange={(e) => handleChange('hoursWorkedTarget', e.target.value)}
+                            className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="160"
+                            min="1"
+                          />
+                          <span className="text-sm text-gray-600">hours worked → earn</span>
+                          <input
+                            type="number"
+                            value={formData.hoursWorkedEarned}
+                            onChange={(e) => handleChange('hoursWorkedEarned', e.target.value)}
+                            className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="8"
+                            min="0.01"
+                            step="0.01"
+                          />
+                          <span className="text-sm text-gray-600">hours PTO</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Calculation Period */}
+                    <div className="grid grid-cols-3 gap-4 items-start mb-4">
+                      <label className="text-sm font-medium text-gray-900 pt-2">
+                        Calculation Period
+                      </label>
+                      <div className="col-span-2">
+                        <select
+                          value={formData.hoursWorkedPeriod}
+                          onChange={(e) => handleChange('hoursWorkedPeriod', e.target.value)}
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="Weekly">Weekly</option>
+                          <option value="Bi-weekly">Bi-weekly</option>
+                          <option value="Monthly">Monthly</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Proration */}
+                    <div className="grid grid-cols-3 gap-4 items-start mb-4">
+                      <label className="text-sm font-medium text-gray-900 pt-2">
+                        Proration
+                      </label>
+                      <div className="col-span-2">
+                        <label className="flex items-start gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.hoursWorkedProration}
+                            onChange={(e) => handleChange('hoursWorkedProration', e.target.checked)}
+                            className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <div>
+                            <span className="text-sm text-gray-900">
+                              Proportional accrual if fewer hours worked
+                            </span>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Example: 120 hours worked = (120/160) × 8 = 6 hours earned
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Info Note */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+                      <span className="text-blue-600 text-sm">ℹ️</span>
+                      <p className="text-sm text-blue-900">
+                        This option is ideal for contractors and part-time employees whose PTO
+                        accrual should be based on actual hours worked.
+                      </p>
                     </div>
                   </div>
                 )}
