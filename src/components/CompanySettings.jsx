@@ -20,6 +20,16 @@ const CompanySettings = () => {
   const [hoursPerDay, setHoursPerDay] = useState('8');
   const [accrualSchedule, setAccrualSchedule] = useState('proration');
 
+  // Advance Notice Requirements State
+  const [requireAdvanceNotice, setRequireAdvanceNotice] = useState(true);
+  const [noticeRules, setNoticeRules] = useState([
+    { id: 1, duration: '1-3 working days', notice: 14 },
+    { id: 2, duration: '4-5 working days', notice: 28 },
+    { id: 3, duration: 'More than 5 days', notice: 60 },
+  ]);
+  const [sickLeaveExempt, setSickLeaveExempt] = useState(true);
+  const [managerOverride, setManagerOverride] = useState(true);
+
   const tabs = [
     'Company Profile',
     'Access Delegation',
@@ -137,7 +147,7 @@ const CompanySettings = () => {
       </div>
 
       {/* Section 3: Accrual Schedule */}
-      <div className="mb-8">
+      <div className="mb-8 pb-8 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Accrual Schedule</h3>
         <p className="text-sm text-gray-600 mb-4">When should time off be accrued?</p>
 
@@ -199,6 +209,125 @@ const CompanySettings = () => {
             </div>
           </label>
         </div>
+      </div>
+
+      {/* Section 4: Advance Notice Requirements */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Advance Notice Requirements</h3>
+
+        {/* Toggle */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() => setRequireAdvanceNotice(!requireAdvanceNotice)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 ${
+              requireAdvanceNotice ? 'bg-blue-600' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-all duration-200 ${
+                requireAdvanceNotice ? 'translate-x-6' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+          <span className="text-sm font-medium text-gray-900">
+            Require advance notice for time off requests
+          </span>
+        </div>
+
+        {requireAdvanceNotice ? (
+          <div className="space-y-4">
+            {/* Rules Table */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Request Duration
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Minimum Notice Required
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {noticeRules.map((rule) => (
+                    <tr key={rule.id}>
+                      <td className="px-4 py-3 text-sm text-gray-900">{rule.duration}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            value={rule.notice}
+                            onChange={(e) => {
+                              const updatedRules = noticeRules.map((r) =>
+                                r.id === rule.id ? { ...r, notice: parseInt(e.target.value) || 0 } : r
+                              );
+                              setNoticeRules(updatedRules);
+                            }}
+                            className="w-20 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                          />
+                          <span className="text-sm text-gray-600">days before</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              type="button"
+              className="text-blue-600 text-sm font-medium hover:text-blue-700"
+            >
+              + Add Rule
+            </button>
+
+            {/* Exceptions */}
+            <div className="pt-4">
+              <p className="text-sm font-medium text-gray-900 mb-3">Exceptions:</p>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sickLeaveExempt}
+                    onChange={(e) => setSickLeaveExempt(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-900">
+                    Sick leave exempt from notice requirements
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={managerOverride}
+                    onChange={(e) => setManagerOverride(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-900">
+                    Allow manager to override notice requirements
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Info Note */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+              <span className="text-blue-600 text-sm">ℹ️</span>
+              <p className="text-sm text-blue-900">
+                Requests that don't meet notice requirements will show a warning but can still be
+                submitted for manager approval.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-600">
+            Employees can submit requests at any time without advance notice requirements.
+          </p>
+        )}
       </div>
 
       {/* Footer */}
