@@ -55,25 +55,46 @@ const MyTimeOff = () => {
       id: 1,
       dateRequested: 'Feb 15, 2025',
       type: 'Vacation',
-      dates: 'Mar 1-2, 2025',
+      dates: 'Mar 1-2',
       duration: '2 days',
       status: 'Approved',
+      balanceChange: -2,
     },
     {
       id: 2,
-      dateRequested: 'Jan 20, 2025',
-      type: 'Sick',
-      dates: 'Jan 22, 2025',
-      duration: '0.5 days',
-      status: 'Approved',
+      dateRequested: 'Feb 1, 2025',
+      type: 'Accrual',
+      dates: '—',
+      duration: '—',
+      status: null,
+      balanceChange: 1.67,
     },
     {
       id: 3,
-      dateRequested: 'Jan 10, 2025',
-      type: 'Vacation',
-      dates: 'Feb 14-16, 2025',
-      duration: '2 days',
-      status: 'Denied',
+      dateRequested: 'Jan 20, 2025',
+      type: 'Sick',
+      dates: 'Jan 22',
+      duration: '0.5 day',
+      status: 'Approved',
+      balanceChange: -0.5,
+    },
+    {
+      id: 4,
+      dateRequested: 'Jan 1, 2025',
+      type: 'Accrual',
+      dates: '—',
+      duration: '—',
+      status: null,
+      balanceChange: 1.67,
+    },
+    {
+      id: 5,
+      dateRequested: 'Dec 15, 2024',
+      type: 'Adjustment',
+      dates: '—',
+      duration: '—',
+      status: 'Manual add',
+      balanceChange: 3,
     },
   ]);
 
@@ -104,6 +125,10 @@ const MyTimeOff = () => {
         return 'bg-blue-50 text-blue-700';
       case 'Sick':
         return 'bg-emerald-50 text-emerald-700';
+      case 'Accrual':
+        return 'bg-gray-100 text-gray-500';
+      case 'Adjustment':
+        return 'bg-purple-50 text-purple-700';
       default:
         return 'bg-gray-100 text-gray-500';
     }
@@ -217,10 +242,10 @@ const MyTimeOff = () => {
         )}
       </div>
 
-      {/* Request History */}
+      {/* Time Off History */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Request History
+          Time Off History
         </h2>
 
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -228,7 +253,7 @@ const MyTimeOff = () => {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-4 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date Requested
+                  Date
                 </th>
                 <th className="text-left px-4 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Type
@@ -243,7 +268,7 @@ const MyTimeOff = () => {
                   Status
                 </th>
                 <th className="text-left px-4 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Balance Change
                 </th>
               </tr>
             </thead>
@@ -269,24 +294,29 @@ const MyTimeOff = () => {
                     {request.duration}
                   </td>
                   <td className="px-4 py-4">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                        request.status
-                      )}`}
-                    >
-                      {request.status}
-                    </span>
+                    {request.status ? (
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                          request.status
+                        )}`}
+                      >
+                        {request.status}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-400">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-4">
-                    <button
-                      onClick={() => {
-                        setSelectedRequest(request);
-                        setShowDetailsModal(true);
-                      }}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-all duration-150 hover:scale-105 active:scale-95"
+                    <span
+                      className={`text-sm font-medium ${
+                        request.balanceChange > 0
+                          ? 'text-emerald-600'
+                          : 'text-red-600'
+                      }`}
                     >
-                      View
-                    </button>
+                      {request.balanceChange > 0 ? '+' : ''}
+                      {request.balanceChange} days
+                    </span>
                   </td>
                 </tr>
               ))}
