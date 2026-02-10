@@ -23,12 +23,13 @@ const CompanySettings = () => {
   // Advance Notice Requirements State
   const [requireAdvanceNotice, setRequireAdvanceNotice] = useState(true);
   const [noticeRules, setNoticeRules] = useState([
-    { id: 1, duration: '1-3 working days', notice: 14 },
-    { id: 2, duration: '4-5 working days', notice: 28 },
-    { id: 3, duration: 'More than 5 days', notice: 60 },
+    { id: 1, from: 1, to: 3, notice: 14, isDefault: true },
+    { id: 2, from: 4, to: 5, notice: 28, isDefault: true },
+    { id: 3, from: 6, to: null, notice: 60, isDefault: true }, // null means "more than"
   ]);
   const [sickLeaveExempt, setSickLeaveExempt] = useState(true);
   const [managerOverride, setManagerOverride] = useState(true);
+  const [nextRuleId, setNextRuleId] = useState(4);
 
   const tabs = [
     'Company Profile',
@@ -71,6 +72,42 @@ const CompanySettings = () => {
   const handleSaveSettings = () => {
     setToastMessage('Time Off settings saved successfully');
     setShowToast(true);
+  };
+
+  const handleAddRule = () => {
+    const newRule = {
+      id: nextRuleId,
+      from: 6,
+      to: 10,
+      notice: 45,
+      isDefault: false,
+    };
+    setNoticeRules([...noticeRules, newRule]);
+    setNextRuleId(nextRuleId + 1);
+  };
+
+  const handleDeleteRule = (ruleId) => {
+    if (noticeRules.length === 1) {
+      setToastMessage('At least one rule must remain');
+      setShowToast(true);
+      return;
+    }
+    setNoticeRules(noticeRules.filter((r) => r.id !== ruleId));
+  };
+
+  const handleUpdateRule = (ruleId, field, value) => {
+    const updatedRules = noticeRules.map((r) =>
+      r.id === ruleId ? { ...r, [field]: value === '' ? null : parseInt(value) || 0 } : r
+    );
+    setNoticeRules(updatedRules);
+  };
+
+  const formatRuleDuration = (rule) => {
+    if (rule.isDefault) {
+      if (rule.to === null) return 'More than 5 days';
+      return `${rule.from}-${rule.to} working days`;
+    }
+    return null; // Will show inputs for custom rules
   };
 
   const renderTimeOffSettings = () => (
@@ -248,37 +285,79 @@ const CompanySettings = () => {
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Minimum Notice Required
                     </th>
+                    <th className="w-12"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {noticeRules.map((rule) => (
-                    <tr key={rule.id}>
-                      <td className="px-4 py-3 text-sm text-gray-900">{rule.duration}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            value={rule.notice}
-                            onChange={(e) => {
-                              const updatedRules = noticeRules.map((r) =>
-                                r.id === rule.id ? { ...r, notice: parseInt(e.target.value) || 0 } : r
-                              );
-                              setNoticeRules(updatedRules);
-                            }}
-                            className="w-20 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            min="0"
-                          />
-                          <span className="text-sm text-gray-600">days before</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {noticeRules.map((rule) => {
+                    const durationText = formatRuleDuration(rule);
+                    return (
+                      <tr key={rule.id}>
+                        <td className="px-4 py-3">
+                          {durationText ? (
+                            <span className="text-sm text-gray-900">{durationText}</span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                value={rule.from || ''}
+                                onChange={(e) => handleUpdateRule(rule.id, 'from', e.target.value)}
+                                placeholder="From"
+                                className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                min="1"
+                              />
+                              <span className="text-sm text-gray-600">to</span>
+                              <input
+                                type="number"
+                                value={rule.to || ''}
+                                onChange={(e) => handleUpdateRule(rule.id, 'to', e.target.value)}
+                                placeholder="To"
+                                className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                min="1"
+                              />
+                              <span className="text-sm text-gray-600">days</span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={rule.notice}
+                              onChange={(e) => handleUpdateRule(rule.id, 'notice', e.target.value)}
+                              className="w-20 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              min="0"
+                            />
+                            <span className="text-sm text-gray-600">days before</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRule(rule.id)}
+                            className="text-gray-400 hover:text-red-600 transition-colors"
+                            title="Delete rule"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             <button
               type="button"
+              onClick={handleAddRule}
               className="text-blue-600 text-sm font-medium hover:text-blue-700"
             >
               + Add Rule

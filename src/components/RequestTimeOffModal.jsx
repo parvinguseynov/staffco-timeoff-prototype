@@ -11,6 +11,15 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
   const [workingDays, setWorkingDays] = useState(0);
   const [futureBalance, setFutureBalance] = useState(null);
   const [hasNegativeBalance, setHasNegativeBalance] = useState(false);
+  const [advanceNoticeWarning, setAdvanceNoticeWarning] = useState(null);
+
+  // Mock advance notice rules (in real app, would come from company settings)
+  const advanceNoticeRules = [
+    { from: 1, to: 3, notice: 14 },
+    { from: 4, to: 5, notice: 28 },
+    { from: 6, to: null, notice: 60 }, // null means "more than"
+  ];
+  const sickLeaveExempt = true;
 
   const categories = [
     { id: 'Vacation', name: 'Vacation', icon: '🏖️' },
@@ -59,10 +68,49 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
         setFutureBalance(null);
         setHasNegativeBalance(false);
       }
+
+      // Check advance notice requirements
+      if (formData.category === 'Sick Leave' && sickLeaveExempt) {
+        setAdvanceNoticeWarning(null);
+      } else {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = new Date(formData.startDate);
+        startDate.setHours(0, 0, 0, 0);
+
+        const daysBetween = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
+
+        // Find matching rule
+        let matchingRule = null;
+        for (const rule of advanceNoticeRules) {
+          if (rule.to === null && days >= rule.from) {
+            matchingRule = rule;
+            break;
+          } else if (days >= rule.from && days <= rule.to) {
+            matchingRule = rule;
+            break;
+          }
+        }
+
+        if (matchingRule && daysBetween < matchingRule.notice) {
+          const durationText = matchingRule.to === null
+            ? `${matchingRule.from}+ day requests`
+            : `${matchingRule.from}-${matchingRule.to} day requests`;
+
+          setAdvanceNoticeWarning({
+            required: matchingRule.notice,
+            actual: daysBetween,
+            durationText,
+          });
+        } else {
+          setAdvanceNoticeWarning(null);
+        }
+      }
     } else {
       setWorkingDays(0);
       setFutureBalance(null);
       setHasNegativeBalance(false);
+      setAdvanceNoticeWarning(null);
     }
   }, [formData.startDate, formData.endDate, formData.category, selectedBalance]);
 
@@ -195,6 +243,29 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
                   />
                 </div>
 
+                {/* Advance Notice Warning */}
+                {advanceNoticeWarning && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-2">
+                      <span className="text-amber-600 text-lg">⚠️</span>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-amber-800 mb-2">
+                          Advance Notice Warning
+                        </h4>
+                        <p className="text-sm text-amber-800 mb-2">
+                          Your company requires {advanceNoticeWarning.required} days notice for{' '}
+                          {advanceNoticeWarning.durationText}. You are submitting with only{' '}
+                          {advanceNoticeWarning.actual} days notice.
+                        </p>
+                        <p className="text-sm text-amber-800">
+                          You can still submit, but your manager will be notified of the policy
+                          exception.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Summary Card */}
                 {workingDays > 0 && futureBalance !== null && (
                   <div className="bg-gray-50 rounded-lg p-4 mt-2">
@@ -252,7 +323,7 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
                 disabled={!isFormValid}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                Submit Request
+                {advanceNoticeWarning ? 'Submit Anyway' : 'Submit Request'}
               </button>
             </div>
           </form>
