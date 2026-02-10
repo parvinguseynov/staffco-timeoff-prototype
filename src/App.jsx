@@ -67,7 +67,7 @@ function App() {
             <TimeOffContent currentRole={currentRole} />
           ) : currentView === 'Employment Info' ? (
             <EmploymentInfo />
-          ) : currentView === 'Settings' ? (
+          ) : currentView === 'Company Settings' ? (
             <CompanySettings />
           ) : (
             <div className="p-6">
