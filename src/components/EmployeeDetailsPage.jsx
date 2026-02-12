@@ -1087,7 +1087,8 @@ const BalanceHistoryModal = ({ policy, onClose }) => {
                       <td className="px-4 py-4 text-sm text-gray-500">{entry.by}</td>
                       <td className="px-4 py-4 text-sm text-gray-500">{entry.reason}</td>
                     </tr>
-                  ))}
+                  );
+                })}
                 </tbody>
               </table>
             </div>
