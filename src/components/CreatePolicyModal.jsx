@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
   const [formData, setFormData] = useState({
+    policyType: editingPolicy?.policyType || '',
     name: editingPolicy?.name || '',
     category: editingPolicy?.category || 'Paid',
     eligibility: (editingPolicy?.category || 'Paid') === 'Unpaid' ? 'From hire date' : 'After probation period',
@@ -52,6 +53,9 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
     e.preventDefault();
 
     const newErrors = {};
+    if (!formData.policyType) {
+      newErrors.policyType = 'Policy type is required';
+    }
     if (!formData.name.trim()) {
       newErrors.name = 'Policy name is required';
     }
@@ -96,6 +100,34 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
             {/* Modal Body */}
             <div className="px-6 py-4 overflow-y-auto flex-1">
               <div className="space-y-6">
+                {/* Policy Type */}
+                <div className="grid grid-cols-3 gap-4 items-start">
+                  <label className="text-sm font-medium text-gray-900 pt-2">
+                    Policy Type
+                  </label>
+                  <div className="col-span-2">
+                    <select
+                      value={formData.policyType}
+                      onChange={(e) => handleChange('policyType', e.target.value)}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        errors.policyType ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select type</option>
+                      <option value="Vacation / PTO">Vacation / PTO</option>
+                      <option value="Sick Leave">Sick Leave</option>
+                      <option value="Personal Leave">Personal Leave</option>
+                      <option value="Parental Leave">Parental Leave</option>
+                      <option value="Bereavement">Bereavement</option>
+                      <option value="Birthday Leave">Birthday Leave</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    {errors.policyType && (
+                      <p className="text-red-500 text-sm mt-1">{errors.policyType}</p>
+                    )}
+                  </div>
+                </div>
+
                 {/* Policy Name */}
                 <div className="grid grid-cols-3 gap-4 items-start">
                   <label className="text-sm font-medium text-gray-900 pt-2">
