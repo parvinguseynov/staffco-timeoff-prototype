@@ -259,9 +259,15 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
                             <span className="text-2xl">{policy.icon || '🎁'}</span>
                             <div>
                               <h3 className="font-semibold text-gray-900">{policy.name}</h3>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
-                                Manual Policy
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                                  {policy.category}
+                                </span>
+                                <span className="text-xs text-gray-400">|</span>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
+                                  Manual
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -324,9 +330,15 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
                             <span className="text-2xl">{getPolicyIcon(policy.category)}</span>
                             <div>
                               <h3 className="font-semibold text-gray-900">{policy.name}</h3>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                                {policy.category}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                                  {policy.category}
+                                </span>
+                                <span className="text-xs text-gray-400">|</span>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                                  Accrual
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -354,14 +366,32 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
                         </div>
 
                         <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                            Change Policy
+                          <button
+                            onClick={() => {
+                              setSelectedManualPolicy(policy);
+                              setShowAddDaysModal(true);
+                            }}
+                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            + Add Days
                           </button>
                           <button
-                            onClick={() => handleRemovePolicy(policy.id)}
+                            onClick={() => {
+                              setSelectedManualPolicy(policy);
+                              setShowRemoveDaysModal(true);
+                            }}
                             className="text-sm text-red-600 hover:text-red-700 font-medium"
                           >
-                            Remove
+                            - Remove Days
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedManualPolicy(policy);
+                              setShowHistoryModal(true);
+                            }}
+                            className="text-sm text-gray-600 hover:text-gray-700 font-medium"
+                          >
+                            View History
                           </button>
                         </div>
                       </div>
@@ -1011,7 +1041,7 @@ const BalanceHistoryModal = ({ policy, onClose }) => {
                       Date
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Action
+                      Type
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Amount
@@ -1028,22 +1058,28 @@ const BalanceHistoryModal = ({ policy, onClose }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {(policy.adjustmentHistory || []).map((entry) => (
-                    <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-4 text-sm text-gray-900">{entry.date}</td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            entry.action === 'Added'
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : entry.action === 'Removed'
-                              ? 'bg-red-50 text-red-700'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
-                          {entry.action}
-                        </span>
-                      </td>
+                  {(policy.adjustmentHistory || []).map((entry) => {
+                    const entryType = entry.type || entry.action;
+                    const getBadgeColor = () => {
+                      if (entryType === 'Added' || entryType === 'Accrual' || entryType === 'Adjustment') {
+                        return 'bg-emerald-50 text-emerald-700';
+                      } else if (entryType === 'Removed' || entryType === 'Used') {
+                        return 'bg-red-50 text-red-700';
+                      } else {
+                        return 'bg-gray-100 text-gray-600';
+                      }
+                    };
+
+                    return (
+                      <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-4 text-sm text-gray-900">{entry.date}</td>
+                        <td className="px-4 py-4">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getBadgeColor()}`}
+                          >
+                            {entryType}
+                          </span>
+                        </td>
                       <td className="px-4 py-4 text-sm text-gray-900">
                         {entry.amount > 0 ? `+${entry.amount}` : entry.amount}
                       </td>

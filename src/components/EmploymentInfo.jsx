@@ -20,6 +20,13 @@ const EmploymentInfo = () => {
           accrualStart: '2024-01-15',
           balance: 12.5,
           accrualType: 'Accrual',
+          accrualRate: '1.67 days/month',
+          adjustmentHistory: [
+            { id: 1, date: 'Feb 1, 2025', type: 'Accrual', amount: 1.67, balance: 12.5, by: 'System', reason: 'Monthly accrual' },
+            { id: 2, date: 'Jan 15, 2025', type: 'Used', amount: -2, balance: 10.83, by: 'Ruhid Shukurlu', reason: 'PTO request' },
+            { id: 3, date: 'Jan 1, 2025', type: 'Accrual', amount: 1.67, balance: 12.83, by: 'System', reason: 'Monthly accrual' },
+            { id: 4, date: 'Dec 1, 2024', type: 'Accrual', amount: 1.67, balance: 11.16, by: 'System', reason: 'Monthly accrual' },
+          ],
         },
         {
           id: 2,
@@ -28,6 +35,11 @@ const EmploymentInfo = () => {
           accrualStart: '2024-01-15',
           balance: 8,
           accrualType: 'Accrual',
+          accrualRate: '10 days/year',
+          adjustmentHistory: [
+            { id: 1, date: 'Jan 1, 2025', type: 'Accrual', amount: 10, balance: 10, by: 'System', reason: 'Annual accrual' },
+            { id: 2, date: 'Feb 5, 2025', type: 'Used', amount: -2, balance: 8, by: 'Ruhid Shukurlu', reason: 'Sick leave' },
+          ],
         },
         {
           id: 4,
