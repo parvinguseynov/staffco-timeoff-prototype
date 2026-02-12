@@ -843,14 +843,33 @@ const AddDaysModal = ({ employee, policy, onClose, onConfirm }) => {
 const RemoveDaysModal = ({ employee, policy, onClose, onConfirm }) => {
   const [daysToRemove, setDaysToRemove] = useState(1);
   const [reason, setReason] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!reason.trim()) return;
+
+    // Validate that we're not removing more than the current balance
+    if (daysToRemove > policy.balance) {
+      setError(`Cannot remove more than current balance (${policy.balance} days)`);
+      return;
+    }
+
     onConfirm(daysToRemove, reason);
   };
 
+  const handleDaysChange = (value) => {
+    const days = Math.max(0.5, parseFloat(value) || 0);
+    setDaysToRemove(days);
+
+    // Clear error when user changes the value
+    if (error && days <= policy.balance) {
+      setError('');
+    }
+  };
+
   const newBalance = policy.balance - daysToRemove;
+  const isValid = reason.trim() && daysToRemove <= policy.balance;
 
   return (
     <>
@@ -895,12 +914,18 @@ const RemoveDaysModal = ({ employee, policy, onClose, onConfirm }) => {
                 <input
                   type="number"
                   value={daysToRemove}
-                  onChange={(e) => setDaysToRemove(Math.max(0.5, parseFloat(e.target.value) || 0))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e) => handleDaysChange(e.target.value)}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    error ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   min="0.5"
+                  max={policy.balance}
                   step="0.5"
                   required
                 />
+                {error && (
+                  <p className="text-red-500 text-sm mt-1">{error}</p>
+                )}
               </div>
 
               <div>
@@ -938,7 +963,8 @@ const RemoveDaysModal = ({ employee, policy, onClose, onConfirm }) => {
               </button>
               <button
                 type="submit"
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                disabled={!isValid}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600"
               >
                 Remove Days
               </button>
