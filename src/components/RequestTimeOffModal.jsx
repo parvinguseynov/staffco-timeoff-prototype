@@ -9,9 +9,17 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
   });
 
   const [workingDays, setWorkingDays] = useState(0);
+  const [totalHours, setTotalHours] = useState(0);
   const [futureBalance, setFutureBalance] = useState(null);
   const [hasNegativeBalance, setHasNegativeBalance] = useState(false);
   const [advanceNoticeWarning, setAdvanceNoticeWarning] = useState(null);
+  const [startIsPartial, setStartIsPartial] = useState(false);
+  const [endIsPartial, setEndIsPartial] = useState(false);
+  const [startPartialHours, setStartPartialHours] = useState(4);
+  const [endPartialHours, setEndPartialHours] = useState(4);
+
+  // Hours per work day (from Company Settings)
+  const hoursPerWorkDay = 8;
 
   // Mock advance notice rules (in real app, would come from company settings)
   const advanceNoticeRules = [
@@ -53,10 +61,50 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
     return count;
   };
 
+  // Calculate total hours accounting for partial days
+  const calculateTotalHours = (start, end, startPartial, endPartial, startHours, endHours) => {
+    if (!start || !end) return 0;
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const isSameDay = startDate.getTime() === endDate.getTime();
+
+    if (isSameDay) {
+      // Single day request
+      return startPartial ? startHours : hoursPerWorkDay;
+    }
+
+    // Multi-day request
+    const fullDays = calculateWorkingDays(start, end);
+    let totalHours = fullDays * hoursPerWorkDay;
+
+    // Adjust for partial start day
+    if (startPartial) {
+      totalHours = totalHours - hoursPerWorkDay + startHours;
+    }
+
+    // Adjust for partial end day
+    if (endPartial && !isSameDay) {
+      totalHours = totalHours - hoursPerWorkDay + endHours;
+    }
+
+    return totalHours;
+  };
+
   // Effect to calculate working days and future balance
   useEffect(() => {
     if (formData.startDate && formData.endDate) {
-      const days = calculateWorkingDays(formData.startDate, formData.endDate);
+      const hours = calculateTotalHours(
+        formData.startDate,
+        formData.endDate,
+        startIsPartial,
+        endIsPartial,
+        startPartialHours,
+        endPartialHours
+      );
+      const days = hours / hoursPerWorkDay;
+
+      setTotalHours(hours);
       setWorkingDays(days);
 
       // Calculate future balance
@@ -108,11 +156,12 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
       }
     } else {
       setWorkingDays(0);
+      setTotalHours(0);
       setFutureBalance(null);
       setHasNegativeBalance(false);
       setAdvanceNoticeWarning(null);
     }
-  }, [formData.startDate, formData.endDate, formData.category, selectedBalance]);
+  }, [formData.startDate, formData.endDate, formData.category, selectedBalance, startIsPartial, endIsPartial, startPartialHours, endPartialHours]);
 
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
@@ -145,7 +194,7 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
               day: 'numeric',
               year: 'numeric',
             })}`,
-      duration: `${workingDays} day${workingDays !== 1 ? 's' : ''}`,
+      duration: totalHours === hoursPerWorkDay ? '1 day' : `${workingDays} day${workingDays !== 1 ? 's' : ''} (${totalHours} hours)`,
       status: 'Pending',
       note: formData.note,
     };
@@ -227,6 +276,47 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
                     onChange={(e) => handleChange('startDate', e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
+
+                  {/* Start Date Type Toggle */}
+                  <div className="mt-3 space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="startDayType"
+                        checked={!startIsPartial}
+                        onChange={() => setStartIsPartial(false)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Full day</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="startDayType"
+                        checked={startIsPartial}
+                        onChange={() => setStartIsPartial(true)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Partial day</span>
+                    </label>
+
+                    {/* Partial Hours Input */}
+                    {startIsPartial && (
+                      <div className="ml-6 flex items-center gap-2 mt-2">
+                        <span className="text-sm text-gray-600">Hours:</span>
+                        <input
+                          type="number"
+                          value={startPartialHours}
+                          onChange={(e) => setStartPartialHours(Math.min(hoursPerWorkDay, Math.max(0.5, parseFloat(e.target.value) || 0)))}
+                          className="w-20 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          min="0.5"
+                          max={hoursPerWorkDay}
+                          step="0.5"
+                        />
+                        <span className="text-sm text-gray-600">hours (out of {hoursPerWorkDay})</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* End Date */}
@@ -241,6 +331,49 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
                     min={formData.startDate}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
+
+                  {/* End Date Type Toggle (only show if different from start date) */}
+                  {formData.startDate && formData.endDate && formData.startDate !== formData.endDate && (
+                    <div className="mt-3 space-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="endDayType"
+                          checked={!endIsPartial}
+                          onChange={() => setEndIsPartial(false)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">Full day</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="endDayType"
+                          checked={endIsPartial}
+                          onChange={() => setEndIsPartial(true)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">Partial day</span>
+                      </label>
+
+                      {/* Partial Hours Input */}
+                      {endIsPartial && (
+                        <div className="ml-6 flex items-center gap-2 mt-2">
+                          <span className="text-sm text-gray-600">Hours:</span>
+                          <input
+                            type="number"
+                            value={endPartialHours}
+                            onChange={(e) => setEndPartialHours(Math.min(hoursPerWorkDay, Math.max(0.5, parseFloat(e.target.value) || 0)))}
+                            className="w-20 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            min="0.5"
+                            max={hoursPerWorkDay}
+                            step="0.5"
+                          />
+                          <span className="text-sm text-gray-600">hours</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Advance Notice Warning */}
@@ -272,13 +405,13 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-gray-700">Duration:</span>
                       <span className="text-sm font-medium text-gray-900">
-                        {workingDays} working day{workingDays !== 1 ? 's' : ''}
+                        {workingDays} working day{workingDays !== 1 ? 's' : ''} ({totalHours} hours)
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-700">Balance after:</span>
                       <span className={`text-sm font-medium ${futureBalance >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                        {futureBalance} days
+                        {futureBalance.toFixed(1)} days
                       </span>
                     </div>
                   </div>
