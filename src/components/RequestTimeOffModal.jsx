@@ -65,28 +65,33 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
   const calculateTotalHours = (start, end, startPartial, endPartial, startHours, endHours) => {
     if (!start || !end) return 0;
 
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const isSameDay = startDate.getTime() === endDate.getTime();
+    const isSameDay = start === end;
 
     if (isSameDay) {
-      // Single day request
+      // Single day request - just use start day hours
       return startPartial ? startHours : hoursPerWorkDay;
     }
 
     // Multi-day request
-    const fullDays = calculateWorkingDays(start, end);
-    let totalHours = fullDays * hoursPerWorkDay;
+    const totalWorkingDays = calculateWorkingDays(start, end);
 
-    // Adjust for partial start day
-    if (startPartial) {
-      totalHours = totalHours - hoursPerWorkDay + startHours;
+    if (totalWorkingDays <= 1) {
+      // Edge case: only one working day in range
+      return startPartial ? startHours : hoursPerWorkDay;
     }
 
-    // Adjust for partial end day
-    if (endPartial && !isSameDay) {
-      totalHours = totalHours - hoursPerWorkDay + endHours;
-    }
+    // Calculate middle days (excluding start and end)
+    const middleDays = Math.max(0, totalWorkingDays - 2);
+    const middleHours = middleDays * hoursPerWorkDay;
+
+    // Calculate start day hours
+    const startDayHours = startPartial ? startHours : hoursPerWorkDay;
+
+    // Calculate end day hours
+    const endDayHours = endPartial ? endHours : hoursPerWorkDay;
+
+    // Total = start + middle + end
+    const totalHours = startDayHours + middleHours + endDayHours;
 
     return totalHours;
   };
@@ -206,7 +211,7 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
     formData.category &&
     formData.startDate &&
     formData.endDate &&
-    workingDays > 0;
+    totalHours > 0;
 
   return (
     <>
@@ -369,7 +374,7 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
                             max={hoursPerWorkDay}
                             step="0.5"
                           />
-                          <span className="text-sm text-gray-600">hours</span>
+                          <span className="text-sm text-gray-600">hours (out of {hoursPerWorkDay})</span>
                         </div>
                       )}
                     </div>
