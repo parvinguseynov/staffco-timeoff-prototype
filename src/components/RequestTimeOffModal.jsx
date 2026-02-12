@@ -61,45 +61,50 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
     return count;
   };
 
-  // Calculate total hours accounting for partial days
-  const calculateTotalHours = (start, end, startPartial, endPartial, startHours, endHours) => {
-    if (!start || !end) return 0;
+  // Calculate duration accounting for partial days
+  const calculateDuration = (start, end, startPartial, endPartial, startHours, endHours) => {
+    if (!start || !end) return { days: 0, hours: 0 };
 
     const isSameDay = start === end;
 
     if (isSameDay) {
-      // Single day request - just use start day hours
-      return startPartial ? startHours : hoursPerWorkDay;
+      // Same day request
+      if (startPartial) {
+        const days = startHours / hoursPerWorkDay;
+        return { days, hours: startHours };
+      } else {
+        return { days: 1, hours: hoursPerWorkDay };
+      }
     }
 
-    // Multi-day request
+    // Multiple days request
+    // Step 1: Count working days between start and end (inclusive)
     const totalWorkingDays = calculateWorkingDays(start, end);
 
-    if (totalWorkingDays <= 1) {
-      // Edge case: only one working day in range
-      return startPartial ? startHours : hoursPerWorkDay;
+    // Step 2: Apply partial day adjustments
+    let duration = totalWorkingDays;
+
+    // If start is partial: subtract (hoursPerDay - startHours) / hoursPerDay
+    if (startPartial) {
+      const reduction = (hoursPerWorkDay - startHours) / hoursPerWorkDay;
+      duration -= reduction;
     }
 
-    // Calculate middle days (excluding start and end)
-    const middleDays = Math.max(0, totalWorkingDays - 2);
-    const middleHours = middleDays * hoursPerWorkDay;
+    // If end is partial: subtract (hoursPerDay - endHours) / hoursPerDay
+    if (endPartial) {
+      const reduction = (hoursPerWorkDay - endHours) / hoursPerWorkDay;
+      duration -= reduction;
+    }
 
-    // Calculate start day hours
-    const startDayHours = startPartial ? startHours : hoursPerWorkDay;
+    const hours = duration * hoursPerWorkDay;
 
-    // Calculate end day hours
-    const endDayHours = endPartial ? endHours : hoursPerWorkDay;
-
-    // Total = start + middle + end
-    const totalHours = startDayHours + middleHours + endDayHours;
-
-    return totalHours;
+    return { days: duration, hours };
   };
 
   // Effect to calculate working days and future balance
   useEffect(() => {
     if (formData.startDate && formData.endDate) {
-      const hours = calculateTotalHours(
+      const { days, hours } = calculateDuration(
         formData.startDate,
         formData.endDate,
         startIsPartial,
@@ -107,7 +112,6 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
         startPartialHours,
         endPartialHours
       );
-      const days = hours / hoursPerWorkDay;
 
       setTotalHours(hours);
       setWorkingDays(days);
@@ -199,7 +203,7 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
               day: 'numeric',
               year: 'numeric',
             })}`,
-      duration: totalHours === hoursPerWorkDay ? '1 day' : `${workingDays} day${workingDays !== 1 ? 's' : ''} (${totalHours} hours)`,
+      duration: workingDays === 1 ? '1 day' : `${workingDays.toFixed(1)} day${workingDays !== 1 ? 's' : ''} (${totalHours} hours)`,
       status: 'Pending',
       note: formData.note,
     };
@@ -410,7 +414,7 @@ const RequestTimeOffModal = ({ onClose, onSubmit, balances }) => {
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-gray-700">Duration:</span>
                       <span className="text-sm font-medium text-gray-900">
-                        {workingDays} working day{workingDays !== 1 ? 's' : ''} ({totalHours} hours)
+                        {workingDays.toFixed(1)} working day{workingDays !== 1 ? 's' : ''} ({totalHours} hours)
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
