@@ -1,9 +1,10 @@
 import { useState } from 'react';
 
 const AVAILABLE_POLICIES = [
-  { id: 1, name: 'Standard PTO', category: 'Vacation', accrualRate: '1.67 days/month' },
-  { id: 2, name: 'Sick Leave', category: 'Sick', accrualRate: '10 days/year' },
-  { id: 3, name: 'Unpaid Leave', category: 'Unpaid', accrualRate: 'No accrual' },
+  { id: 1, name: 'Standard PTO', category: 'Vacation', accrualRate: '1.67 days/month', accrualType: 'Accrual' },
+  { id: 2, name: 'Sick Leave', category: 'Sick', accrualRate: '10 days/year', accrualType: 'Accrual' },
+  { id: 3, name: 'Unpaid Leave', category: 'Unpaid', accrualRate: 'No accrual', accrualType: 'Manual' },
+  { id: 4, name: 'Bonus Days', category: 'Other', accrualRate: 'No accrual', accrualType: 'Manual', icon: '🎁' },
 ];
 
 const AVAILABLE_CALENDARS = [
@@ -16,6 +17,10 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
   const [selectedPolicy, setSelectedPolicy] = useState('');
   const [accrualStartDate, setAccrualStartDate] = useState('');
   const [selectedCalendar, setSelectedCalendar] = useState(employee.holidayCalendar || '');
+  const [showAddDaysModal, setShowAddDaysModal] = useState(false);
+  const [showRemoveDaysModal, setShowRemoveDaysModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedManualPolicy, setSelectedManualPolicy] = useState(null);
 
   const tabs = [
     'Employment Details',
@@ -243,56 +248,124 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
               ) : (
                 <div className="space-y-4 mb-6">
                   {employee.policies.map((policy, index) => (
-                    <div
-                      key={policy.id}
-                      className={`border border-gray-200 rounded-lg p-5 transition-all duration-200 ease-out hover:shadow-lg hover:scale-[1.01] animate-stagger-${Math.min(index + 1, 3)}`}
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{getPolicyIcon(policy.category)}</span>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{policy.name}</h3>
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                              {policy.category}
-                            </span>
+                    policy.accrualType === 'Manual' ? (
+                      // Manual Policy Card
+                      <div
+                        key={policy.id}
+                        className={`border border-gray-200 rounded-lg p-5 transition-all duration-200 ease-out hover:shadow-lg hover:scale-[1.01] animate-stagger-${Math.min(index + 1, 3)}`}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">{policy.icon || '🎁'}</span>
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{policy.name}</h3>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
+                                Manual Policy
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-3 gap-6 mb-4">
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Balance</p>
-                          <p className="text-lg font-semibold text-gray-900">{policy.balance} days</p>
-                          <p className="text-xs text-gray-500">available</p>
+                        <div className="grid grid-cols-3 gap-6 mb-4">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Balance</p>
+                            <p className="text-lg font-semibold text-gray-900">{policy.balance} days</p>
+                            <p className="text-xs text-gray-500">available</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Added This Year</p>
+                            <p className="text-sm text-gray-900">{policy.addedThisYear || 0} days</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Last Adjusted</p>
+                            <p className="text-sm text-gray-900">{policy.lastAdjusted || 'Never'}</p>
+                            <p className="text-xs text-gray-500">by {policy.lastAdjustedBy || 'N/A'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Accrual Rate</p>
-                          <p className="text-sm text-gray-900">{policy.accrualRate || 'Not set'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Accrual Start</p>
-                          <p className="text-sm text-gray-900">
-                            {new Date(policy.accrualStart).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </p>
-                        </div>
-                      </div>
 
-                      <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                        <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                          Change Policy
-                        </button>
-                        <button
-                          onClick={() => handleRemovePolicy(policy.id)}
-                          className="text-sm text-red-600 hover:text-red-700 font-medium"
-                        >
-                          Remove
-                        </button>
+                        <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                          <button
+                            onClick={() => {
+                              setSelectedManualPolicy(policy);
+                              setShowAddDaysModal(true);
+                            }}
+                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            + Add Days
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedManualPolicy(policy);
+                              setShowRemoveDaysModal(true);
+                            }}
+                            className="text-sm text-red-600 hover:text-red-700 font-medium"
+                          >
+                            - Remove Days
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedManualPolicy(policy);
+                              setShowHistoryModal(true);
+                            }}
+                            className="text-sm text-gray-600 hover:text-gray-700 font-medium"
+                          >
+                            View History
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      // Regular Accrual Policy Card
+                      <div
+                        key={policy.id}
+                        className={`border border-gray-200 rounded-lg p-5 transition-all duration-200 ease-out hover:shadow-lg hover:scale-[1.01] animate-stagger-${Math.min(index + 1, 3)}`}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">{getPolicyIcon(policy.category)}</span>
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{policy.name}</h3>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                                {policy.category}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-6 mb-4">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Balance</p>
+                            <p className="text-lg font-semibold text-gray-900">{policy.balance} days</p>
+                            <p className="text-xs text-gray-500">available</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Accrual Rate</p>
+                            <p className="text-sm text-gray-900">{policy.accrualRate || 'Not set'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Accrual Start</p>
+                            <p className="text-sm text-gray-900">
+                              {new Date(policy.accrualStart).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                            Change Policy
+                          </button>
+                          <button
+                            onClick={() => handleRemovePolicy(policy.id)}
+                            className="text-sm text-red-600 hover:text-red-700 font-medium"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    )
                   ))}
                 </div>
               )}
@@ -513,7 +586,463 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
           </div>
         )}
       </div>
+
+      {/* Add Days Modal */}
+      {showAddDaysModal && selectedManualPolicy && (
+        <AddDaysModal
+          employee={employee}
+          policy={selectedManualPolicy}
+          onClose={() => {
+            setShowAddDaysModal(false);
+            setSelectedManualPolicy(null);
+          }}
+          onConfirm={(days, reason, effectiveDate) => {
+            // Update policy balance
+            const updatedPolicies = employee.policies.map((p) =>
+              p.id === selectedManualPolicy.id
+                ? {
+                    ...p,
+                    balance: p.balance + days,
+                    addedThisYear: (p.addedThisYear || 0) + days,
+                    lastAdjusted: effectiveDate,
+                    lastAdjustedBy: 'Admin',
+                    adjustmentHistory: [
+                      {
+                        id: Date.now(),
+                        date: effectiveDate,
+                        action: 'Added',
+                        amount: days,
+                        balance: p.balance + days,
+                        by: 'Admin',
+                        reason,
+                      },
+                      ...(p.adjustmentHistory || []),
+                    ],
+                  }
+                : p
+            );
+            onUpdate(employee.id, { policies: updatedPolicies });
+            setShowAddDaysModal(false);
+            setSelectedManualPolicy(null);
+          }}
+        />
+      )}
+
+      {/* Remove Days Modal */}
+      {showRemoveDaysModal && selectedManualPolicy && (
+        <RemoveDaysModal
+          employee={employee}
+          policy={selectedManualPolicy}
+          onClose={() => {
+            setShowRemoveDaysModal(false);
+            setSelectedManualPolicy(null);
+          }}
+          onConfirm={(days, reason) => {
+            // Update policy balance
+            const updatedPolicies = employee.policies.map((p) =>
+              p.id === selectedManualPolicy.id
+                ? {
+                    ...p,
+                    balance: p.balance - days,
+                    lastAdjusted: new Date().toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    }),
+                    lastAdjustedBy: 'Admin',
+                    adjustmentHistory: [
+                      {
+                        id: Date.now(),
+                        date: new Date().toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        }),
+                        action: 'Removed',
+                        amount: -days,
+                        balance: p.balance - days,
+                        by: 'Admin',
+                        reason,
+                      },
+                      ...(p.adjustmentHistory || []),
+                    ],
+                  }
+                : p
+            );
+            onUpdate(employee.id, { policies: updatedPolicies });
+            setShowRemoveDaysModal(false);
+            setSelectedManualPolicy(null);
+          }}
+        />
+      )}
+
+      {/* History Modal */}
+      {showHistoryModal && selectedManualPolicy && (
+        <BalanceHistoryModal
+          policy={selectedManualPolicy}
+          onClose={() => {
+            setShowHistoryModal(false);
+            setSelectedManualPolicy(null);
+          }}
+        />
+      )}
     </div>
+  );
+};
+
+// Add Days Modal Component
+const AddDaysModal = ({ employee, policy, onClose, onConfirm }) => {
+  const [daysToAdd, setDaysToAdd] = useState(2);
+  const [reason, setReason] = useState('');
+  const [effectiveDate, setEffectiveDate] = useState('today');
+  const [customDate, setCustomDate] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!reason.trim()) return;
+
+    const dateToUse =
+      effectiveDate === 'today'
+        ? new Date().toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })
+        : new Date(customDate).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          });
+
+    onConfirm(daysToAdd, reason, dateToUse);
+  };
+
+  const newBalance = policy.balance + daysToAdd;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-modalBackdrop"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white rounded-xl shadow-xl w-full max-w-md animate-modalSlideUp"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Add Days to Balance</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            {/* Body */}
+            <div className="px-6 py-4 space-y-4">
+              <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Employee:</span> {employee.name}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Policy:</span> {policy.name}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Current Balance:</span> {policy.balance} days
+                </p>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4">
+                <label className="block text-sm font-medium text-gray-900 mb-1">Days to Add:</label>
+                <input
+                  type="number"
+                  value={daysToAdd}
+                  onChange={(e) => setDaysToAdd(Math.max(0.5, parseFloat(e.target.value) || 0))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  min="0.5"
+                  step="0.5"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Reason (required):
+                </label>
+                <input
+                  type="text"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., 5-year anniversary bonus"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Effective Date:
+                </label>
+                <select
+                  value={effectiveDate}
+                  onChange={(e) => setEffectiveDate(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2"
+                >
+                  <option value="today">Today</option>
+                  <option value="custom">Custom date...</option>
+                </select>
+
+                {effectiveDate === 'custom' && (
+                  <input
+                    type="date"
+                    value={customDate}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                )}
+              </div>
+
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-900">New Balance:</span>
+                  <span className="text-lg font-semibold text-emerald-600">{newBalance} days</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Add Days
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// Remove Days Modal Component
+const RemoveDaysModal = ({ employee, policy, onClose, onConfirm }) => {
+  const [daysToRemove, setDaysToRemove] = useState(1);
+  const [reason, setReason] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!reason.trim()) return;
+    onConfirm(daysToRemove, reason);
+  };
+
+  const newBalance = policy.balance - daysToRemove;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-modalBackdrop"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white rounded-xl shadow-xl w-full max-w-md animate-modalSlideUp"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Remove Days from Balance</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            {/* Body */}
+            <div className="px-6 py-4 space-y-4">
+              <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Employee:</span> {employee.name}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Policy:</span> {policy.name}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Current Balance:</span> {policy.balance} days
+                </p>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4">
+                <label className="block text-sm font-medium text-gray-900 mb-1">Days to Remove:</label>
+                <input
+                  type="number"
+                  value={daysToRemove}
+                  onChange={(e) => setDaysToRemove(Math.max(0.5, parseFloat(e.target.value) || 0))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  min="0.5"
+                  step="0.5"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Reason (required):
+                </label>
+                <input
+                  type="text"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Correction - days added in error"
+                  required
+                />
+              </div>
+
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-900">New Balance:</span>
+                  <span className={`text-lg font-semibold ${newBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {newBalance} days
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Remove Days
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// Balance History Modal Component
+const BalanceHistoryModal = ({ policy, onClose }) => {
+  return (
+    <>
+      <div
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-modalBackdrop"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col animate-modalSlideUp"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+            <h2 className="text-lg font-semibold text-gray-900">Balance History: {policy.name}</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-4 overflow-y-auto flex-1">
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Action
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Balance
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      By
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Reason
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {(policy.adjustmentHistory || []).map((entry) => (
+                    <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-4 text-sm text-gray-900">{entry.date}</td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            entry.action === 'Added'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : entry.action === 'Removed'
+                              ? 'bg-red-50 text-red-700'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {entry.action}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-900">
+                        {entry.amount > 0 ? `+${entry.amount}` : entry.amount}
+                      </td>
+                      <td className="px-4 py-4 text-sm font-medium text-gray-900">{entry.balance}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{entry.by}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{entry.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 flex justify-end flex-shrink-0">
+            <button
+              onClick={onClose}
+              className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
