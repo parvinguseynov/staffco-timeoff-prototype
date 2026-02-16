@@ -13,7 +13,7 @@ const AVAILABLE_CALENDARS = [
 ];
 
 const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState('Employment Details');
+  const [activeTab, setActiveTab] = useState('Time Off');
   const [selectedPolicy, setSelectedPolicy] = useState('');
   const [accrualStartDate, setAccrualStartDate] = useState('');
   const [selectedCalendar, setSelectedCalendar] = useState(employee.holidayCalendar || '');
@@ -264,40 +264,15 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-6">
         {activeTab === 'Employment Details' && (
-          <div className="space-y-6">
-            {/* Personal Information Section */}
-            <div className="bg-white rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Full Name</label>
-                  <p className="mt-1 text-gray-900">{employee.name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Email</label>
-                  <p className="mt-1 text-gray-900">{employee.email}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Department</label>
-                  <p className="mt-1 text-gray-900">{employee.department}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Status</label>
-                  <p className="mt-1">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        employee.status === 'Active'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-amber-50 text-amber-700'
-                      }`}
-                    >
-                      {employee.status}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="bg-white rounded-xl p-12 text-center">
+            <div className="text-4xl text-gray-300 mb-3">📄</div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Employment Details</h2>
+            <p className="text-gray-500">This section is under development</p>
+          </div>
+        )}
 
+        {activeTab === 'Time Off' && (
+          <div className="space-y-6">
             {/* Work Schedule Section */}
             <div className="bg-white rounded-xl p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Work Schedule</h2>
@@ -402,11 +377,7 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
                 )}
               </div>
             </div>
-          </div>
-        )}
 
-        {activeTab === 'Time Off' && (
-          <div className="space-y-6">
             {/* Assigned Policies Section */}
             <div className="bg-white rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
