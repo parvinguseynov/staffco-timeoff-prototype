@@ -177,9 +177,10 @@ const CompanySettings = () => {
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
           <span className="text-blue-600 text-sm">ℹ️</span>
-          <p className="text-sm text-blue-900">
-            Used to calculate partial day requests and hour-to-day conversions.
-          </p>
+          <div className="text-sm text-blue-900">
+            <p>This setting applies to ALL employees company-wide and cannot be overridden per employee.</p>
+            <p className="mt-1">Individual working days can be customized in each employee's Employment Info.</p>
+          </div>
         </div>
       </div>
 

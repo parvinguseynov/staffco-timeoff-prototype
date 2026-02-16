@@ -60,6 +60,10 @@ const EmploymentInfo = () => {
         },
       ],
       holidayCalendar: 'Azerbaijan 2025',
+      workSchedule: {
+        mode: 'default',
+        customDays: null,
+      },
     },
     {
       id: 2,
@@ -85,6 +89,10 @@ const EmploymentInfo = () => {
         },
       ],
       holidayCalendar: 'Azerbaijan 2025',
+      workSchedule: {
+        mode: 'default',
+        customDays: null,
+      },
     },
     {
       id: 3,
@@ -95,6 +103,10 @@ const EmploymentInfo = () => {
       status: 'Active',
       policies: [],
       holidayCalendar: null,
+      workSchedule: {
+        mode: 'default',
+        customDays: null,
+      },
     },
     {
       id: 4,
@@ -120,6 +132,10 @@ const EmploymentInfo = () => {
         },
       ],
       holidayCalendar: 'US Federal 2025',
+      workSchedule: {
+        mode: 'default',
+        customDays: null,
+      },
     },
   ]);
 

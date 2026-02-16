@@ -13,7 +13,7 @@ const AVAILABLE_CALENDARS = [
 ];
 
 const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState('Time Off');
+  const [activeTab, setActiveTab] = useState('Employment Details');
   const [selectedPolicy, setSelectedPolicy] = useState('');
   const [accrualStartDate, setAccrualStartDate] = useState('');
   const [selectedCalendar, setSelectedCalendar] = useState(employee.holidayCalendar || '');
@@ -21,6 +21,19 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
   const [showRemoveDaysModal, setShowRemoveDaysModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedManualPolicy, setSelectedManualPolicy] = useState(null);
+
+  // Work Schedule state
+  const [workScheduleMode, setWorkScheduleMode] = useState(employee.workSchedule?.mode || 'default');
+  const [customWorkDays, setCustomWorkDays] = useState(employee.workSchedule?.customDays || {
+    mon: true,
+    tue: true,
+    wed: true,
+    thu: true,
+    fri: true,
+    sat: false,
+    sun: false,
+  });
+  const [workScheduleError, setWorkScheduleError] = useState('');
 
   const tabs = [
     'Employment Details',
@@ -70,6 +83,37 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
     onUpdate(employee.id, {
       holidayCalendar: selectedCalendar,
     });
+  };
+
+  const handleToggleWorkDay = (day) => {
+    setCustomWorkDays({
+      ...customWorkDays,
+      [day]: !customWorkDays[day],
+    });
+    setWorkScheduleError('');
+  };
+
+  const handleSaveWorkSchedule = () => {
+    // Validate: at least one day must be selected
+    const hasAtLeastOneDay = Object.values(customWorkDays).some(day => day);
+
+    if (!hasAtLeastOneDay) {
+      setWorkScheduleError('At least one working day must be selected');
+      return;
+    }
+
+    onUpdate(employee.id, {
+      workSchedule: {
+        mode: workScheduleMode,
+        customDays: workScheduleMode === 'custom' ? customWorkDays : null,
+      },
+    });
+    setWorkScheduleError('');
+  };
+
+  const handleWorkScheduleModeChange = (mode) => {
+    setWorkScheduleMode(mode);
+    setWorkScheduleError('');
   };
 
   const getPolicyIcon = (category) => {
@@ -220,10 +264,144 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-6">
         {activeTab === 'Employment Details' && (
-          <div className="bg-white rounded-xl p-12 text-center">
-            <div className="text-4xl text-gray-300 mb-3">📄</div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Employment Details</h2>
-            <p className="text-gray-500">This section is under development</p>
+          <div className="space-y-6">
+            {/* Personal Information Section */}
+            <div className="bg-white rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Full Name</label>
+                  <p className="mt-1 text-gray-900">{employee.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Email</label>
+                  <p className="mt-1 text-gray-900">{employee.email}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Department</label>
+                  <p className="mt-1 text-gray-900">{employee.department}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Status</label>
+                  <p className="mt-1">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        employee.status === 'Active'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-amber-50 text-amber-700'
+                      }`}
+                    >
+                      {employee.status}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Work Schedule Section */}
+            <div className="bg-white rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Work Schedule</h2>
+
+              <div>
+                <label className="text-sm font-medium text-gray-900 mb-3 block">Working Days:</label>
+
+                <div className="space-y-3">
+                  {/* Default Schedule Option */}
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="workScheduleMode"
+                      value="default"
+                      checked={workScheduleMode === 'default'}
+                      onChange={(e) => handleWorkScheduleModeChange(e.target.value)}
+                      className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">Use company default (Mon-Fri)</div>
+                    </div>
+                  </label>
+
+                  {/* Custom Schedule Option */}
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="workScheduleMode"
+                      value="custom"
+                      checked={workScheduleMode === 'custom'}
+                      onChange={(e) => handleWorkScheduleModeChange(e.target.value)}
+                      className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">Custom</div>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Custom Work Days Selection */}
+                {workScheduleMode === 'custom' && (
+                  <div className="mt-4 space-y-4">
+                    <div className="flex items-center gap-4">
+                      {['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((day) => (
+                        <label key={day} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={customWorkDays[day]}
+                            onChange={() => handleToggleWorkDay(day)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-900 capitalize">
+                            {day}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+
+                    {/* Info Message */}
+                    <div className="flex gap-2 p-3 bg-blue-50 rounded-lg">
+                      <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <div className="text-sm text-blue-900">
+                        <p>Custom working days affect time-off duration calculations for this employee.</p>
+                        <p className="mt-1">Hours per day remains company-wide (8h).</p>
+                      </div>
+                    </div>
+
+                    {/* Error Message */}
+                    {workScheduleError && (
+                      <div className="flex gap-2 p-3 bg-red-50 rounded-lg">
+                        <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-sm text-red-900">{workScheduleError}</p>
+                      </div>
+                    )}
+
+                    {/* Save Button */}
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleSaveWorkSchedule}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Save Button for Default Mode */}
+                {workScheduleMode === 'default' && (
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={handleSaveWorkSchedule}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
