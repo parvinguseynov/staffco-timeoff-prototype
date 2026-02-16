@@ -5,6 +5,7 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
     policyType: editingPolicy?.policyType || '',
     name: editingPolicy?.name || '',
     category: editingPolicy?.category || 'Paid',
+    trackBalance: editingPolicy?.trackBalance !== undefined ? editingPolicy.trackBalance : true,
     eligibility: (editingPolicy?.category || 'Paid') === 'Unpaid' ? 'From hire date' : 'After probation period',
     customEligibilityDays: '',
     accrualType: editingPolicy?.accrualRate === 'No accrual' ? 'Manual' : 'Accrual',
@@ -223,6 +224,62 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                   </div>
                 </div>
 
+                {/* Track Balance Toggle (only for Unpaid) */}
+                {formData.category === 'Unpaid' && (
+                  <div className="grid grid-cols-3 gap-4 items-start">
+                    <label className="text-sm font-medium text-gray-900 pt-2">
+                      Track balance?
+                    </label>
+                    <div className="col-span-2">
+                      <div className="space-y-3">
+                        <label className="flex items-start gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="trackBalance"
+                            value="yes"
+                            checked={formData.trackBalance === true}
+                            onChange={() => handleChange('trackBalance', true)}
+                            className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                          />
+                          <div>
+                            <span className="text-sm text-gray-900">Yes - employees have a limited balance</span>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Set accrual rules and limits for this policy
+                            </p>
+                          </div>
+                        </label>
+
+                        <label className="flex items-start gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="trackBalance"
+                            value="no"
+                            checked={formData.trackBalance === false}
+                            onChange={() => handleChange('trackBalance', false)}
+                            className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                          />
+                          <div>
+                            <span className="text-sm text-gray-900">No - unlimited, approval-based only</span>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Employees can request any amount, manager decides
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* Info for unlimited */}
+                      {formData.trackBalance === false && (
+                        <div className="flex items-start gap-2 mt-3 p-3 bg-blue-50 rounded-lg">
+                          <span className="text-blue-600 text-sm">ℹ️</span>
+                          <p className="text-xs text-blue-900">
+                            Unlimited policies show "Available" instead of balance. Requests require manager approval.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Eligibility */}
                 <div className="grid grid-cols-3 gap-4 items-start">
                   <label className="text-sm font-medium text-gray-900 pt-2">
@@ -270,7 +327,8 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                   </div>
                 </div>
 
-                {/* Accrual Type */}
+                {/* Accrual Type - only show for Paid or Unpaid with tracked balance */}
+                {(formData.category === 'Paid' || (formData.category === 'Unpaid' && formData.trackBalance === true)) && (
                 <div className="grid grid-cols-3 gap-4 items-start">
                   <label className="text-sm font-medium text-gray-900 pt-2">
                     Accrual Type
@@ -529,6 +587,7 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                       </select>
                     </div>
                   </div>
+                )}
                 )}
 
                 {/* Require Documentation */}

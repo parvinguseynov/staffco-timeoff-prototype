@@ -397,7 +397,42 @@ const EmployeeDetailsPage = ({ employee, onBack, onUpdate }) => {
               ) : (
                 <div className="space-y-4 mb-6">
                   {employee.policies.map((policy, index) => (
-                    policy.accrualType === 'Manual' ? (
+                    policy.trackBalance === false ? (
+                      // Unlimited Policy Card
+                      <div
+                        key={policy.id}
+                        className={`border border-gray-200 rounded-lg p-5 transition-all duration-200 ease-out hover:shadow-lg hover:scale-[1.01] animate-stagger-${Math.min(index + 1, 3)}`}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">👤</span>
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{policy.name}</h3>
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                                  {policy.category}
+                                </span>
+                                <span className="text-xs text-gray-400">|</span>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                  Unlimited
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-900 font-medium mb-1">Status: <span className="text-emerald-600">Available</span></p>
+                          <p className="text-sm text-gray-500">Requests require manager approval</p>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-100">
+                          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                            Request Time Off
+                          </button>
+                        </div>
+                      </div>
+                    ) : policy.accrualType === 'Manual' ? (
                       // Manual Policy Card
                       <div
                         key={policy.id}

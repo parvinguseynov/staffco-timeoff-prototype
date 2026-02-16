@@ -87,6 +87,13 @@ const EmploymentInfo = () => {
           accrualStart: '2024-03-01',
           balance: 10,
         },
+        {
+          id: 3,
+          name: 'Personal Leave',
+          category: 'Unpaid',
+          trackBalance: false,
+          accrualType: 'Unlimited',
+        },
       ],
       holidayCalendar: 'Azerbaijan 2025',
       workSchedule: {
