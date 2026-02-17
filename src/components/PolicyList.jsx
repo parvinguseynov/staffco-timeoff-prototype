@@ -17,6 +17,16 @@ const PolicyList = () => {
   const [policyToDelete, setPolicyToDelete] = useState(null);
   const [showDeleteCalendarModal, setShowDeleteCalendarModal] = useState(false);
   const [calendarToDelete, setCalendarToDelete] = useState(null);
+
+  // Assignments tab state
+  const [assignmentsView, setAssignmentsView] = useState('By Policy');
+  const [selectedPolicyForAssignment, setSelectedPolicyForAssignment] = useState(1);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showUnassignModal, setShowUnassignModal] = useState(false);
+  const [employeesToUnassign, setEmployeesToUnassign] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('All');
   const [policies, setPolicies] = useState([
     {
       id: 1,
@@ -75,6 +85,16 @@ const PolicyList = () => {
       holidayCount: 11,
       employees: 5,
     },
+  ]);
+
+  // Mock employee data for assignments
+  const [employees, setEmployees] = useState([
+    { id: 1, name: 'Ruhid Shukurlu', email: 'ruhid@staffco.com', department: 'Engineering', assignedPolicies: [1, 2, 4] },
+    { id: 2, name: 'Farida Aghayeva', email: 'farida@staffco.com', department: 'Design', assignedPolicies: [1, 2, 3] },
+    { id: 3, name: 'Enver Orujov', email: 'enver@staffco.com', department: 'Engineering', assignedPolicies: [] },
+    { id: 4, name: 'Marat Kochnev', email: 'marat@staffco.com', department: 'Marketing', assignedPolicies: [1, 3] },
+    { id: 5, name: 'Anna Smith', email: 'anna@staffco.com', department: 'HR', assignedPolicies: [1, 2] },
+    { id: 6, name: 'John Doe', email: 'john@staffco.com', department: 'Engineering', assignedPolicies: [1, 2] },
   ]);
 
   const handleCreatePolicy = (policyData) => {
@@ -199,22 +219,24 @@ const PolicyList = () => {
             Manage your company's time off policies
           </p>
         </div>
-        <button
-          onClick={() =>
-            activeTab === 'Policies'
-              ? setShowCreateModal(true)
-              : setShowCalendarModal(true)
-          }
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-150 hover:scale-105 active:scale-95"
-        >
-          + {activeTab === 'Policies' ? 'Create Policy' : 'Add Holiday Calendar'}
-        </button>
+        {activeTab !== 'Assignments' && (
+          <button
+            onClick={() =>
+              activeTab === 'Policies'
+                ? setShowCreateModal(true)
+                : setShowCalendarModal(true)
+            }
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-150 hover:scale-105 active:scale-95"
+          >
+            + {activeTab === 'Policies' ? 'Create Policy' : 'Add Holiday Calendar'}
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
         <div className="flex gap-1">
-          {['Policies', 'Holiday Calendars'].map((tab) => (
+          {['Policies', 'Holiday Calendars', 'Assignments'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -437,6 +459,288 @@ const PolicyList = () => {
         </>
       )}
 
+      {/* Assignments Tab */}
+      {activeTab === 'Assignments' && (
+        <div className="space-y-6">
+          {/* View Toggle */}
+          <div className="bg-white rounded-xl p-4 border border-gray-200">
+            <div className="flex gap-2">
+              {['By Policy', 'By Employee'].map((view) => (
+                <button
+                  key={view}
+                  onClick={() => setAssignmentsView(view)}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    assignmentsView === view
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {view}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* By Policy View */}
+          {assignmentsView === 'By Policy' && (
+            <div className="space-y-6">
+              {/* Policy Selector */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200">
+                <label className="text-sm font-medium text-gray-900 mb-2 block">Select Policy:</label>
+                <select
+                  value={selectedPolicyForAssignment}
+                  onChange={(e) => setSelectedPolicyForAssignment(parseInt(e.target.value))}
+                  className="w-full max-w-md border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {policies.map((policy) => (
+                    <option key={policy.id} value={policy.id}>
+                      {policy.name} ({policy.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Assigned Employees */}
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Assigned Employees ({employees.filter(e => e.assignedPolicies.includes(selectedPolicyForAssignment)).length})
+                  </h3>
+                  {selectedEmployees.filter(id => employees.find(e => e.id === id)?.assignedPolicies.includes(selectedPolicyForAssignment)).length > 0 && (
+                    <button
+                      onClick={() => {
+                        const assignedSelected = selectedEmployees.filter(id =>
+                          employees.find(e => e.id === id)?.assignedPolicies.includes(selectedPolicyForAssignment)
+                        );
+                        setEmployeesToUnassign(assignedSelected);
+                        setShowUnassignModal(true);
+                      }}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Unassign Selected ({selectedEmployees.filter(id => employees.find(e => e.id === id)?.assignedPolicies.includes(selectedPolicyForAssignment)).length})
+                    </button>
+                  )}
+                </div>
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                        <input
+                          type="checkbox"
+                          onChange={(e) => {
+                            const assignedIds = employees.filter(e => e.assignedPolicies.includes(selectedPolicyForAssignment)).map(e => e.id);
+                            if (e.target.checked) {
+                              setSelectedEmployees([...new Set([...selectedEmployees, ...assignedIds])]);
+                            } else {
+                              setSelectedEmployees(selectedEmployees.filter(id => !assignedIds.includes(id)));
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {employees.filter(e => e.assignedPolicies.includes(selectedPolicyForAssignment)).length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                          No employees assigned to this policy
+                        </td>
+                      </tr>
+                    ) : (
+                      employees.filter(e => e.assignedPolicies.includes(selectedPolicyForAssignment)).map((emp) => (
+                        <tr key={emp.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedEmployees.includes(emp.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedEmployees([...selectedEmployees, emp.id]);
+                                } else {
+                                  setSelectedEmployees(selectedEmployees.filter(id => id !== emp.id));
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{emp.name}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{emp.email}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{emp.department}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Not Assigned Employees */}
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Not Assigned ({employees.filter(e => !e.assignedPolicies.includes(selectedPolicyForAssignment)).length})
+                  </h3>
+                  {selectedEmployees.filter(id => !employees.find(e => e.id === id)?.assignedPolicies.includes(selectedPolicyForAssignment)).length > 0 && (
+                    <button
+                      onClick={() => setShowAssignModal(true)}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Assign Selected ({selectedEmployees.filter(id => !employees.find(e => e.id === id)?.assignedPolicies.includes(selectedPolicyForAssignment)).length})
+                    </button>
+                  )}
+                </div>
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                        <input
+                          type="checkbox"
+                          onChange={(e) => {
+                            const unassignedIds = employees.filter(e => !e.assignedPolicies.includes(selectedPolicyForAssignment)).map(e => e.id);
+                            if (e.target.checked) {
+                              setSelectedEmployees([...new Set([...selectedEmployees, ...unassignedIds])]);
+                            } else {
+                              setSelectedEmployees(selectedEmployees.filter(id => !unassignedIds.includes(id)));
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {employees.filter(e => !e.assignedPolicies.includes(selectedPolicyForAssignment)).map((emp) => (
+                      <tr key={emp.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedEmployees.includes(emp.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedEmployees([...selectedEmployees, emp.id]);
+                              } else {
+                                setSelectedEmployees(selectedEmployees.filter(id => id !== emp.id));
+                              }
+                            }}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{emp.name}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{emp.email}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{emp.department}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* By Employee View */}
+          {assignmentsView === 'By Employee' && (
+            <div className="space-y-6">
+              {/* Search and Filter */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200">
+                <div className="flex gap-4">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      placeholder="Search employees..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <svg
+                      className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+                  <select
+                    value={departmentFilter}
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="All">All Departments</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Design">Design</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="HR">HR</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Employees Table */}
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Policies</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {employees
+                      .filter(e =>
+                        (searchQuery === '' || e.name.toLowerCase().includes(searchQuery.toLowerCase()) || e.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
+                        (departmentFilter === 'All' || e.department === departmentFilter)
+                      )
+                      .map((emp) => (
+                        <tr key={emp.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-900">{emp.name}</span>
+                              {emp.assignedPolicies.length === 0 && (
+                                <svg className="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{emp.email}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{emp.department}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {emp.assignedPolicies.length === 0 ? (
+                              <span className="text-amber-600 font-medium">No policies assigned</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                {emp.assignedPolicies.map(policyId => {
+                                  const policy = policies.find(p => p.id === policyId);
+                                  return policy ? (
+                                    <span key={policyId} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                      {policy.name}
+                                    </span>
+                                  ) : null;
+                                })}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Create/Edit Policy Modal */}
       {showCreateModal && (
         <CreatePolicyModal
@@ -488,6 +792,57 @@ const PolicyList = () => {
         />
       )}
 
+      {/* Assign Policy Modal */}
+      {showAssignModal && (
+        <AssignPolicyModal
+          policy={policies.find(p => p.id === selectedPolicyForAssignment)}
+          selectedEmployees={selectedEmployees.filter(id => !employees.find(e => e.id === id)?.assignedPolicies.includes(selectedPolicyForAssignment))}
+          employees={employees}
+          onClose={() => {
+            setShowAssignModal(false);
+            setSelectedEmployees([]);
+          }}
+          onAssign={(assignmentData) => {
+            // Update employee assignments
+            setEmployees(employees.map(emp =>
+              assignmentData.employeeIds.includes(emp.id)
+                ? { ...emp, assignedPolicies: [...emp.assignedPolicies, selectedPolicyForAssignment] }
+                : emp
+            ));
+            setShowAssignModal(false);
+            setSelectedEmployees([]);
+            setToastMessage(`Policy assigned to ${assignmentData.employeeIds.length} employee(s)`);
+            setShowToast(true);
+          }}
+        />
+      )}
+
+      {/* Unassign Policy Modal */}
+      {showUnassignModal && (
+        <UnassignPolicyModal
+          policy={policies.find(p => p.id === selectedPolicyForAssignment)}
+          employeeCount={employeesToUnassign.length}
+          onClose={() => {
+            setShowUnassignModal(false);
+            setEmployeesToUnassign([]);
+            setSelectedEmployees([]);
+          }}
+          onUnassign={(unassignData) => {
+            // Update employee assignments
+            setEmployees(employees.map(emp =>
+              employeesToUnassign.includes(emp.id)
+                ? { ...emp, assignedPolicies: emp.assignedPolicies.filter(id => id !== selectedPolicyForAssignment) }
+                : emp
+            ));
+            setShowUnassignModal(false);
+            setEmployeesToUnassign([]);
+            setSelectedEmployees([]);
+            setToastMessage(`Policy unassigned from ${employeesToUnassign.length} employee(s)`);
+            setShowToast(true);
+          }}
+        />
+      )}
+
       {/* Toast Notification */}
       {showToast && (
         <Toast
@@ -497,6 +852,275 @@ const PolicyList = () => {
         />
       )}
     </div>
+  );
+};
+
+// Assign Policy Modal Component
+const AssignPolicyModal = ({ policy, selectedEmployees, employees, onClose, onAssign }) => {
+  const [startingBalance, setStartingBalance] = useState('0');
+  const [customBalance, setCustomBalance] = useState('');
+  const [effectiveDate, setEffectiveDate] = useState('');
+
+  const selectedEmpsData = employees.filter(e => selectedEmployees.includes(e.id));
+
+  const handleAssign = () => {
+    onAssign({
+      employeeIds: selectedEmployees,
+      startingBalance,
+      customBalance: startingBalance === 'custom' ? customBalance : null,
+      effectiveDate,
+    });
+  };
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+            <h2 className="text-lg font-semibold text-gray-900">Assign Policy</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-4 overflow-y-auto flex-1">
+            <div className="space-y-4">
+              {/* Policy Info */}
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-900">Policy: {policy?.name}</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Assigning to {selectedEmployees.length} employee(s)
+                </p>
+              </div>
+
+              {/* Selected Employees */}
+              <div>
+                <label className="text-sm font-medium text-gray-900 mb-2 block">Selected Employees:</label>
+                <div className="max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-3 space-y-1">
+                  {selectedEmpsData.map(emp => (
+                    <div key={emp.id} className="text-sm text-gray-700">
+                      • {emp.name} ({emp.department})
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Starting Balance */}
+              {policy?.trackBalance !== false && (
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-2 block">Starting Balance:</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="startingBalance"
+                        value="0"
+                        checked={startingBalance === '0'}
+                        onChange={(e) => setStartingBalance(e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-900">0 days - starts from zero</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="startingBalance"
+                        value="prorate"
+                        checked={startingBalance === 'prorate'}
+                        onChange={(e) => setStartingBalance(e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-900">Prorate based on hire date</span>
+                    </label>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="radio"
+                        name="startingBalance"
+                        value="custom"
+                        checked={startingBalance === 'custom'}
+                        onChange={(e) => setStartingBalance(e.target.value)}
+                        className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <span className="text-sm text-gray-900">Custom amount</span>
+                        {startingBalance === 'custom' && (
+                          <div className="flex gap-2 items-center mt-2">
+                            <input
+                              type="number"
+                              value={customBalance}
+                              onChange={(e) => setCustomBalance(e.target.value)}
+                              className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="0"
+                              min="0"
+                            />
+                            <span className="text-sm text-gray-600">days</span>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Effective Date */}
+              <div>
+                <label className="text-sm font-medium text-gray-900 mb-2 block">Effective Date:</label>
+                <input
+                  type="date"
+                  value={effectiveDate}
+                  onChange={(e) => setEffectiveDate(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAssign}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              Assign Policy
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// Unassign Policy Modal Component
+const UnassignPolicyModal = ({ policy, employeeCount, onClose, onUnassign }) => {
+  const [balanceHandling, setBalanceHandling] = useState('forfeit');
+
+  const handleUnassign = () => {
+    onUnassign({
+      balanceHandling,
+    });
+  };
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white rounded-xl shadow-xl w-full max-w-lg flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+            <h2 className="text-lg font-semibold text-gray-900">Unassign Policy</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-4">
+            <div className="space-y-4">
+              {/* Warning */}
+              <div className="flex gap-3 p-3 bg-amber-50 rounded-lg">
+                <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div className="text-sm text-amber-900">
+                  <p className="font-medium">You are about to unassign {policy?.name} from {employeeCount} employee(s).</p>
+                  <p className="mt-1">What should happen to their current balance?</p>
+                </div>
+              </div>
+
+              {/* Balance Handling Options */}
+              {policy?.trackBalance !== false && (
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-2 block">Balance Handling:</label>
+                  <div className="space-y-2">
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="radio"
+                        name="balanceHandling"
+                        value="forfeit"
+                        checked={balanceHandling === 'forfeit'}
+                        onChange={(e) => setBalanceHandling(e.target.value)}
+                        className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <div>
+                        <span className="text-sm text-gray-900 font-medium">Forfeit</span>
+                        <p className="text-xs text-gray-500 mt-0.5">Balance will be lost immediately</p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="radio"
+                        name="balanceHandling"
+                        value="keep"
+                        checked={balanceHandling === 'keep'}
+                        onChange={(e) => setBalanceHandling(e.target.value)}
+                        className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <div>
+                        <span className="text-sm text-gray-900 font-medium">Keep (frozen)</span>
+                        <p className="text-xs text-gray-500 mt-0.5">Balance kept but frozen - no accrual, can be used</p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="radio"
+                        name="balanceHandling"
+                        value="transfer"
+                        checked={balanceHandling === 'transfer'}
+                        onChange={(e) => setBalanceHandling(e.target.value)}
+                        className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <div>
+                        <span className="text-sm text-gray-900 font-medium">Transfer to another policy</span>
+                        <p className="text-xs text-gray-500 mt-0.5">Move balance to a different policy</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUnassign}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+            >
+              Unassign Policy
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
