@@ -77,6 +77,7 @@ const PolicyList = () => {
       country: 'Azerbaijan',
       holidayCount: 15,
       employees: 20,
+      isDefault: true,
     },
     {
       id: 2,
@@ -84,6 +85,7 @@ const PolicyList = () => {
       country: 'United States',
       holidayCount: 11,
       employees: 5,
+      isDefault: false,
     },
   ]);
 
@@ -179,8 +181,9 @@ const PolicyList = () => {
               name: calendarData.name,
               country: calendarData.country,
               holidayCount: calendarData.holidays.length,
+              isDefault: calendarData.isDefault,
             }
-          : c
+          : calendarData.isDefault ? { ...c, isDefault: false } : c
       ));
       setEditingCalendar(null);
       setShowCalendarModal(false);
@@ -194,8 +197,14 @@ const PolicyList = () => {
         country: calendarData.country,
         holidayCount: calendarData.holidays.length,
         employees: 0,
+        isDefault: calendarData.isDefault,
       };
-      setCalendars([...calendars, newCalendar]);
+      // If new calendar is set as default, remove default from all others
+      if (calendarData.isDefault) {
+        setCalendars([...calendars.map(c => ({ ...c, isDefault: false })), newCalendar]);
+      } else {
+        setCalendars([...calendars, newCalendar]);
+      }
       setShowCalendarModal(false);
       setToastMessage('Calendar created successfully');
       setShowToast(true);
@@ -381,11 +390,16 @@ const PolicyList = () => {
                   <div className="flex flex-col h-full">
                     {/* Card Header with icons */}
                     <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-2xl">🗓️</span>
                         <h3 className="text-lg font-semibold text-gray-900">
                           {calendar.name}
                         </h3>
+                        {calendar.isDefault && (
+                          <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded">
+                            Default
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1">
                         <button
@@ -762,6 +776,7 @@ const PolicyList = () => {
           }}
           onSave={handleAddCalendar}
           editingCalendar={editingCalendar}
+          isFirstCalendar={calendars.length === 0}
         />
       )}
 

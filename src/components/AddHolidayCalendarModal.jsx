@@ -52,7 +52,7 @@ const COUNTRY_HOLIDAYS = {
   ],
 };
 
-const AddHolidayCalendarModal = ({ onClose, onSave, editingCalendar }) => {
+const AddHolidayCalendarModal = ({ onClose, onSave, editingCalendar, isFirstCalendar }) => {
   const [formData, setFormData] = useState({
     name: editingCalendar?.name || '',
     country: editingCalendar?.country || 'Azerbaijan',
@@ -61,6 +61,7 @@ const AddHolidayCalendarModal = ({ onClose, onSave, editingCalendar }) => {
   const [holidays, setHolidays] = useState(
     editingCalendar ? [...COUNTRY_HOLIDAYS[editingCalendar.country] || []] : [...COUNTRY_HOLIDAYS.Azerbaijan]
   );
+  const [isDefault, setIsDefault] = useState(editingCalendar?.isDefault || isFirstCalendar || false);
   const [errors, setErrors] = useState({});
 
   const handleChange = (field, value) => {
@@ -108,6 +109,7 @@ const AddHolidayCalendarModal = ({ onClose, onSave, editingCalendar }) => {
     onSave({
       ...formData,
       holidays: holidays.filter((h) => h.date && h.name),
+      isDefault,
     });
   };
 
@@ -199,6 +201,40 @@ const AddHolidayCalendarModal = ({ onClose, onSave, editingCalendar }) => {
                       <option value="2025">2025</option>
                       <option value="2026">2026</option>
                     </select>
+                  </div>
+                </div>
+
+                {/* Default Calendar Checkbox */}
+                <div className="grid grid-cols-3 gap-4 items-start mt-5 mb-4">
+                  <div></div>
+                  <div className="col-span-2">
+                    <label className="flex items-start cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isDefault}
+                        onChange={(e) => setIsDefault(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                      <span className="ml-2 text-sm font-medium text-gray-900">
+                        Set as default calendar for new employees
+                      </span>
+                    </label>
+                    <div className="ml-6 mt-2 flex items-start">
+                      <svg
+                        className="w-4 h-4 text-gray-400 mt-0.5 mr-1.5 flex-shrink-0"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <p className="text-sm text-gray-500">
+                        Only one calendar can be default. New employees will automatically be assigned to this calendar.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
