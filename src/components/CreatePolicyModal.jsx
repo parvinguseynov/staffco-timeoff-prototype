@@ -388,6 +388,7 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Accrual Rate (conditional) */}
                 {formData.accrualType === 'Accrual' && (
