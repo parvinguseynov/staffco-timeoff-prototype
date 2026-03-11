@@ -589,7 +589,6 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                     </div>
                   </div>
                 )}
-                )}
 
                 {/* Require Documentation */}
                 <div className="grid grid-cols-3 gap-4 items-start">

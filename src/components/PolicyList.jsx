@@ -148,6 +148,12 @@ const PolicyList = () => {
     setShowViewPolicyModal(true);
   };
 
+  const handleViewAssignments = (policy) => {
+    setActiveTab('Assignments');
+    setAssignmentsView('By Policy');
+    setSelectedPolicyForAssignment(policy.id);
+  };
+
   const handleEditPolicy = (policy) => {
     setEditingPolicy(policy);
     setShowCreateModal(true);
@@ -797,6 +803,7 @@ const PolicyList = () => {
             setViewingPolicy(null);
           }}
           onEdit={handleEditPolicy}
+          onViewAssignments={handleViewAssignments}
         />
       )}
 
