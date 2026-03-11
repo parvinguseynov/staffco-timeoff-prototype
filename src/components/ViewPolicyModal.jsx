@@ -1,5 +1,39 @@
-const ViewPolicyModal = ({ policy, onClose, onEdit }) => {
+import { useState, useRef, useEffect } from 'react';
+
+const ViewPolicyModal = ({ policy, onClose, onEdit, employees = [] }) => {
+  const [showEmployeePopover, setShowEmployeePopover] = useState(false);
+  const popoverRef = useRef(null);
+
   if (!policy) return null;
+
+  // Mock employee data - in real app, this would be filtered from props
+  const assignedEmployees = employees.length > 0 ? employees : [
+    { id: 1, name: 'Ruhid Shukurlu', department: 'Engineering', initials: 'RS' },
+    { id: 2, name: 'Farida Aghayeva', department: 'Design', initials: 'FA' },
+    { id: 3, name: 'Enver Orujov', department: 'Engineering', initials: 'EO' },
+    { id: 4, name: 'Marat Kochnev', department: 'Marketing', initials: 'MK' },
+    { id: 5, name: 'Anna Smith', department: 'HR', initials: 'AS' },
+    { id: 6, name: 'John Doe', department: 'Engineering', initials: 'JD' },
+  ];
+
+  const displayedEmployees = assignedEmployees.slice(0, 5);
+  const totalEmployees = policy.employees || assignedEmployees.length;
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target)) {
+        setShowEmployeePopover(false);
+      }
+    };
+
+    if (showEmployeePopover) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmployeePopover]);
 
   const getCategoryIcon = (category) => {
     const icons = {
@@ -14,8 +48,8 @@ const ViewPolicyModal = ({ policy, onClose, onEdit }) => {
 
   const getCategoryBadgeClass = (category) => {
     return category === 'Unpaid'
-      ? 'bg-gray-100 text-gray-700'
-      : 'bg-green-100 text-green-700';
+      ? 'bg-gray-100 text-gray-800'
+      : 'bg-green-100 text-green-800';
   };
 
   return (
@@ -65,7 +99,7 @@ const ViewPolicyModal = ({ policy, onClose, onEdit }) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-500">Status:</span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     {policy.status}
                   </span>
                 </div>
@@ -74,7 +108,7 @@ const ViewPolicyModal = ({ policy, onClose, onEdit }) => {
 
             {/* Accrual Settings Section */}
             <div className="py-4 border-b border-gray-100">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
                 Accrual Settings
               </h4>
               <div className="space-y-2">
@@ -99,26 +133,20 @@ const ViewPolicyModal = ({ policy, onClose, onEdit }) => {
 
             {/* Eligibility Section */}
             <div className="py-4 border-b border-gray-100">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
                 Eligibility
               </h4>
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Eligible From:</span>
-                  <span className="text-sm text-gray-900 font-medium">After probation</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Advance Notice:</span>
-                  <span className="text-sm text-gray-900 font-medium">
-                    14 days for requests of 5+ days
-                  </span>
+                  <span className="text-sm text-gray-900 font-medium">After probation period</span>
                 </div>
               </div>
             </div>
 
             {/* Balance Rules Section */}
             <div className="py-4 border-b border-gray-100">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
                 Balance Rules
               </h4>
               <div className="space-y-2">
@@ -137,23 +165,58 @@ const ViewPolicyModal = ({ policy, onClose, onEdit }) => {
               </div>
             </div>
 
-            {/* Usage Section */}
-            <div className="py-4">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
-                Usage
+            {/* Assigned Employees Section */}
+            <div className="py-4 relative">
+              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                Assigned Employees
               </h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Assigned to:</span>
-                  <span className="text-sm text-gray-900 font-medium">
-                    {policy.employees} employees
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Created:</span>
-                  <span className="text-sm text-gray-900 font-medium">Jan 15, 2024</span>
-                </div>
+              <div className="flex justify-between items-center">
+                <button
+                  onClick={() => setShowEmployeePopover(!showEmployeePopover)}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                >
+                  {totalEmployees} employees
+                </button>
+                <button
+                  onClick={() => setShowEmployeePopover(!showEmployeePopover)}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  View List
+                </button>
               </div>
+
+              {/* Employee Popover */}
+              {showEmployeePopover && (
+                <div
+                  ref={popoverRef}
+                  className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 w-80 z-10"
+                >
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <h5 className="text-sm font-semibold text-gray-900">Assigned Employees</h5>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {displayedEmployees.map((emp) => (
+                      <div key={emp.id} className="px-4 py-2 hover:bg-gray-50 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-medium">
+                          {emp.initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{emp.name}</p>
+                        </div>
+                        <span className="text-xs text-gray-500">{emp.department}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+                    <p className="text-xs text-gray-500 mb-2">
+                      Showing {Math.min(5, totalEmployees)} of {totalEmployees}
+                    </p>
+                    <button className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline">
+                      View All in Employment Info
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
