@@ -18,8 +18,8 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
     allowNegativeBalance: false,
     negativeBalanceLimit: '',
     carryover: 'No carryover',
-    carryoverAmount: '',
-    carryoverUnit: 'days',
+    carryoverPercent: '50',
+    carryoverMaxDays: '',
     requireDocumentation: false,
     effectiveDate: '',
     balanceHandling: 'keep',
@@ -556,29 +556,77 @@ const CreatePolicyModal = ({ onClose, onCreate, editingPolicy }) => {
                       onChange={(e) => handleChange('carryover', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="No carryover">No carryover</option>
-                      <option value="Percentage">Percentage</option>
-                      <option value="Fixed days">Fixed days</option>
-                      <option value="Unlimited">Unlimited</option>
+                      <option value="No carryover">No carryover - Balance resets to 0 at year end</option>
+                      <option value="Percentage">Percentage - Carry X% of balance (up to max days)</option>
+                      <option value="Fixed maximum">Fixed maximum - Carry up to X days maximum</option>
+                      <option value="Unlimited">Unlimited - Full balance carries over</option>
                     </select>
                   </div>
                 </div>
 
-                {/* Carryover Amount (conditional) */}
-                {(formData.carryover === 'Percentage' || formData.carryover === 'Fixed days') && (
+                {/* Carryover Percent (for Percentage option) */}
+                {formData.carryover === 'Percentage' && (
                   <div className="grid grid-cols-3 gap-4 items-start">
                     <label className="text-sm font-medium text-gray-900 pt-2">
-                      Carryover Amount
+                      Carryover Percent
                     </label>
-                    <div className="col-span-2 flex gap-2 items-center">
-                      <input
-                        type="number"
-                        value={formData.carryoverAmount}
-                        onChange={(e) => handleChange('carryoverAmount', e.target.value)}
-                        className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="0"
-                      />
-                      <span className="text-sm text-gray-600">days</span>
+                    <div className="col-span-2">
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="number"
+                          value={formData.carryoverPercent}
+                          onChange={(e) => handleChange('carryoverPercent', e.target.value)}
+                          className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="50"
+                          min="0"
+                          max="100"
+                        />
+                        <span className="text-sm text-gray-600">%</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Maximum Carryover (for Percentage and Fixed maximum) */}
+                {(formData.carryover === 'Percentage' || formData.carryover === 'Fixed maximum') && (
+                  <div className="grid grid-cols-3 gap-4 items-start">
+                    <label className="text-sm font-medium text-gray-900 pt-2">
+                      Maximum Carryover
+                    </label>
+                    <div className="col-span-2">
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="number"
+                          value={formData.carryoverMaxDays}
+                          onChange={(e) => handleChange('carryoverMaxDays', e.target.value)}
+                          className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="10"
+                          min="0"
+                        />
+                        <span className="text-sm text-gray-600">days</span>
+                      </div>
+                      {formData.carryover === 'Percentage' && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Employees carry {formData.carryoverPercent || 'X'}% of their balance, up to the maximum
+                        </p>
+                      )}
+                      {formData.carryover === 'Fixed maximum' && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Employees carry up to this many days
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Unlimited helper text */}
+                {formData.carryover === 'Unlimited' && (
+                  <div className="grid grid-cols-3 gap-4 items-start">
+                    <div></div>
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-500">
+                        Full balance carries to next year
+                      </p>
                     </div>
                   </div>
                 )}
